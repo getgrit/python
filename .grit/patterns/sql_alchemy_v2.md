@@ -39,8 +39,17 @@ pattern bulk_update() {
     sess.execute(stmt)`
 }
 
+pattern convert_to_subquery() {
+    `$var = select($args)` where {
+        $program <: contains `select($query)` where {
+            $query <: contains $var
+        }
+    } => `$var = select($args).subquery()`
+}
+
 file($body) where $body <: any {
-    bulk_update()
+    contains bulk_update(),
+    contains convert_to_subquery()
 }
 ```
 
@@ -50,6 +59,10 @@ Use the [query API](https://docs.sqlalchemy.org/en/20/changelog/migration_14.htm
 
 ```python
 session.query(User).filter(User.name == "sandy").update({ password: "foobar", other: "thing" }, synchronize_session="fetch")
+
+stmt1 = select(user.c.id, user.c.name)
+stmt2 = select(user.c.id, user.c.name)
+stmt3 = select(addresses, stmt2).select_from(addresses.join(stmt1))
 ```
 
 ```python
@@ -57,4 +70,8 @@ with Session(engine, future=True) as sess:
     stmt = (update(User).where(User.name == "sandy").values(password="foobar", other="thing").execution_options(synchronize_session="fetch"))
 
     sess.execute(stmt)
+
+stmt1 = select(user.c.id, user.c.name)
+stmt2 = select(user.c.id, user.c.name).subquery()
+stmt3 = select(addresses, stmt2).select_from(addresses.join(stmt1))
 ```
