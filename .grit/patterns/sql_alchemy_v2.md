@@ -39,7 +39,9 @@ pattern bulk_update() {
     sess.execute(stmt)`
 }
 
-bulk_update()
+file($body) where $body <: any {
+    bulk_update()
+}
 ```
 
 ## grit/example.python
