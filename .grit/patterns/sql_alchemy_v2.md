@@ -13,35 +13,30 @@ language python
 // This pattern is a WIP
 // It is not ready for production use
 
-pattern bulk_update() {
-    `$x.update($details, $exec_options)` where {
-        $x <: contains `$_.query($model)`,
-        $new_statement = `update($model)`,
-        // add where/filter clauses
-        $x <: maybe contains bubble($new_statement) `$_.filter($filters)` where {
-            $new_statement += `.where($filters)`
-        },
+`$x.update($details, $exec_options)` where {
+    $x <: contains `$_.query($model)`,
+    $new_statement = `update($model)`,
 
-        // adjust values
-        $values = [],
-        $details <: contains bubble($values) {
-            pair($key, $value) where $values += `$key=$value`
-        },
-        $new_values = join(list=$values, separator=", "),
-        $new_statement += `.values($new_values)`,
+    // add where/filter clauses
+    $x <: maybe contains bubble($new_statement) `$_.filter($filters)` where {
+        $new_statement += `.where($filters)`
+    },
 
-        // Add execution options
-        $new_statement += `.execution_options($exec_options)`
+    // adjust values
+    $values = [],
+    $details <: contains bubble($values) {
+        pair($key, $value) where $values += `$key=$value`
+    },
+    $new_values = join(list=$values, separator=", "),
+    $new_statement += `.values($new_values)`,
 
-    } => `with Session(engine, future=True) as sess:
+    // Add execution options
+    $new_statement += `.execution_options($exec_options)`
+
+} => `with Session(engine, future=True) as sess:
     stmt = ($new_statement)
 
     sess.execute(stmt)`
-}
-
-file($body) where $body <: any {
-    bulk_update()
-}
 ```
 
 ## grit/example.python
