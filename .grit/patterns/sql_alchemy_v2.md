@@ -54,10 +54,15 @@ pattern c_to_selected_columns() {
     }
 }
 
+pattern select_list_to_vargs() {
+    `select([$args])` => `select($args)`
+}
+
 file($body) where $body <: any {
     contains bulk_update(),
     contains convert_to_subquery(),
-    contains c_to_selected_columns()
+    contains c_to_selected_columns(),
+    contains select_list_to_vargs()
 }
 ```
 
@@ -74,6 +79,8 @@ stmt3 = select(addresses, stmt2).select_from(addresses.join(stmt1))
 
 stmt = select(users)
 stmt = stmt.where(stmt.c.name == "foo")
+
+stmt = select([table.c.col1, table.c.col2, ...])
 ```
 
 ```python
@@ -88,4 +95,6 @@ stmt3 = select(addresses, stmt2).select_from(addresses.join(stmt1))
 
 stmt = select(users)
 stmt = stmt.where(stmt.selected_columns.name == "foo")
+
+stmt = select(table.c.col1, table.c.col2, ...)
 ```
