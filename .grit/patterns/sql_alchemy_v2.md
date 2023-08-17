@@ -10,7 +10,7 @@ tags: #python, #alpha, #hidden
 engine marzano(0.1)
 language python
 
-// This pattern is a WIP
+// This pattern is a WIP WORK
 // It is not ready for production use
 
 pattern bulk_update() {
