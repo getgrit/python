@@ -50,7 +50,7 @@ pattern convert_to_subquery() {
 // this pattern can probably be more general
 pattern c_to_selected_columns() {
     `$x.where($args)` where { 
-        $args <: contains bubble `$a.c.$b` => `$a.selected_columns.$b`
+        $args <: contains bubble($x) `$x.c.$b` => `$x.selected_columns.$b`
     }
 }
 
