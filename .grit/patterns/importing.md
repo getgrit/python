@@ -8,22 +8,112 @@ Grit includes standard patterns for declaratively adding, removing, and updating
 engine marzano(0.1)
 language python
 
-pattern our_import_statement($imports, $source) {
+/** This is a utility file, you do not need to implement it yourself */
+
+pattern python_import($imports, $source) {
     or {
       import_from_statement(name=$imports, module_name=dotted_name(name=$source)),
       import_statement(name=dotted_name(name=$source))
     }
 }
 
+pattern before_each_file_prep_imports() {
+    $_ where {
+        $GLOBAL_IMPORTED_SOURCES = [],
+        $GLOBAL_IMPORTED_NAMES = [],
+    }
+}
+
+pattern after_each_file_handle_imports() {
+  file($body) where $body <: maybe insert_imports()
+}
+
+
+pattern process_one_source($p, $all_imports) {
+    [$p, $source] where {
+        $imported_names = [],
+        $GLOBAL_IMPORTED_NAMES <: some bubble($p, $source, $imported_names, $all_imports) [$p, $name, $source] where {
+            $imported_names += $name,
+        },
+        $joined_imported_names = join(list = $imported_names, separator = ", "),
+        if ($p <: module(statements = some python_import($imports, $source))) {
+            $imports => `$imports, $joined_imported_names`
+        } else {
+            $all_imports += `import { $joined_imported_names } from $source;\n`
+        }
+    }
+}
+
+pattern insert_imports() {
+    $body where {
+        $all_imports = [],
+        $GLOBAL_IMPORTED_SOURCES <: some process_one_source($p, $all_imports),
+        if ($all_imports <: not []) {
+            $p => `$all_imports\n$p`
+        } else {
+            true
+        }
+    }
+}
+
+
+// All core stdlib functions can be done here
+pattern before_each_file_stdlib() {
+  before_each_file_prep_imports()
+}
+
+pattern after_each_file_stdlib() {
+  after_each_file_handle_imports()
+}
+
+
+// These could be redefined in the future (not presently supported)
+pattern before_each_file() {
+  before_each_file_stdlib()
+}
+
+pattern after_each_file() {
+  after_each_file_stdlib()
+}
+
+pattern imported_from($source) {
+    $name where {
+        $program <: module($statements),
+        $statements <: some bubble($name, $source) python_import($imports, $source) where {
+            $imports <: some $name,
+        }
+    }
+}
+
+
+pattern ensure_import_from($source) {
+    $name where {
+        if ($name <: not imported_from($source)) {
+            if ($GLOBAL_IMPORTED_SOURCES <: not some [$program, $source]) {
+                $GLOBAL_IMPORTED_SOURCES += [$program, $source]
+            } else {
+                true
+            },
+            if ($GLOBAL_IMPORTED_NAMES <: not some [$program, $name, $source]) {
+                $GLOBAL_IMPORTED_NAMES += [$program, $name, $source]
+            } else {
+                true
+            }
+        } else {
+            true
+        }
+    }
+}
+
 and {
     // before_each_file(),
     contains or {
-        our_import_statement(source=`pydantic`) => .,
-        our_import_statement(source=`fools`) => .,
-        //`unittest` as $test where {
-        //  $source = `"unittest"`,
-        //  $test <: ensure_import_from($source),
-        //},
+        python_import(source=`pydantic`) => .,
+        python_import(source=`fools`) => .,
+        `unittest` as $test where {
+         $source = `"unittest"`,
+         $test <: ensure_import_from($source),
+        },
     },
     // after_each_file()
 }
