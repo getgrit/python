@@ -56,26 +56,6 @@ pattern insert_imports() {
     }
 }
 
-
-// All core stdlib functions can be done here
-pattern before_each_file_stdlib() {
-  before_each_file_prep_imports()
-}
-
-pattern after_each_file_stdlib() {
-  after_each_file_handle_imports()
-}
-
-
-// These could be redefined in the future (not presently supported)
-pattern before_each_file() {
-  before_each_file_stdlib()
-}
-
-pattern after_each_file() {
-  after_each_file_stdlib()
-}
-
 pattern imported_from($source) {
     $name where {
         $program <: module($statements),
@@ -106,7 +86,7 @@ pattern ensure_import_from($source) {
 }
 
 and {
-    // before_each_file(),
+    before_each_file(),
     contains or {
         python_import(source=`pydantic`) => .,
         python_import(source=`fools`) => .,
@@ -115,7 +95,7 @@ and {
          $test <: ensure_import_from($source),
         },
     },
-    // after_each_file()
+    after_each_file()
 }
 ```
 
@@ -133,4 +113,18 @@ from typing import List
 
 
 
+```
+
+## Ensure no duplicate imports
+
+```python
+import unittest
+
+unittest.TestCase()
+```
+
+```python
+import unittest
+
+unittest.TestCase()
 ```
