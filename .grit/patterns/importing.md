@@ -21,6 +21,7 @@ pattern before_each_file_prep_imports() {
     $_ where {
         $GLOBAL_IMPORTED_SOURCES = [],
         $GLOBAL_IMPORTED_NAMES = [],
+        $GLOBAL_BARE_IMPORTS = [],
     }
 }
 
@@ -44,10 +45,14 @@ pattern process_one_source($p, $all_imports) {
     }
 }
 
+
 pattern insert_imports() {
     $body where {
         $all_imports = [],
-        $GLOBAL_IMPORTED_SOURCES <: some process_one_source($p, $all_imports),
+        $GLOBAL_IMPORTED_SOURCES <: some process_one_source($all_imports),
+        //$GLOBAL_BARE_IMPORTS <: some bubble($body) [$body, $name] where {
+        //  $all_imports += `import $name\n`
+        //},
         if ($all_imports <: not []) {
             $p => `$all_imports\n$p`
         } else {
@@ -85,6 +90,17 @@ pattern ensure_import_from($source) {
     }
 }
 
+pattern ensure_import() {
+    $name where {
+        if ($name <: not imported_from(source=$_)) {
+          $GLOBAL_BARE_IMPORTS += [$program, $name]
+        } else {
+            true
+        }
+    }
+}
+
+
 and {
     before_each_file(),
     contains or {
@@ -93,6 +109,9 @@ and {
         `unittest` as $test where {
             $source = `testing`,
             $test <: ensure_import_from($source),
+        },
+        `othermodule` as $other where {
+            $other <: ensure_import()
         },
     },
     after_each_file()
@@ -143,4 +162,16 @@ unittest.TestCase()
 from testing import unittest, another
 
 unittest.TestCase()
+```
+
+## Add a bare import
+
+```python
+othermodule.TestCase()
+```
+
+```python
+import othermodule
+
+othermodule.TestCase()
 ```
