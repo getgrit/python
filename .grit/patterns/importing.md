@@ -134,13 +134,13 @@ unittest.TestCase()
 ## Ensure no duplicate imports
 
 ```python
-import unittest
+from testing import unittest, another
 
 unittest.TestCase()
 ```
 
 ```python
-import unittest
+from testing import unittest, another
 
 unittest.TestCase()
 ```
