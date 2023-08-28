@@ -49,12 +49,14 @@ pattern process_one_source($p, $all_imports) {
 pattern insert_imports() {
     $body where {
         $all_imports = [],
-        $GLOBAL_IMPORTED_SOURCES <: some process_one_source($all_imports),
-        //$GLOBAL_BARE_IMPORTS <: some bubble($body) [$body, $name] where {
-        //  $all_imports += `import $name\n`
-        //},
-        if ($all_imports <: not []) {
-            $p => `$all_imports\n$p`
+        $has_import = `false`,
+        $GLOBAL_IMPORTED_SOURCES <: maybe some process_one_source($p, $all_imports) where { $has_import = `true` },
+        $GLOBAL_BARE_IMPORTS <: maybe some $name where {
+            $all_imports += `import $name\n`,
+            $has_import = `true`
+        },
+        if ($has_import <: `true`) {
+            $body => `$all_imports\n$body`
         } else {
             true
         }
@@ -92,11 +94,7 @@ pattern ensure_import_from($source) {
 
 pattern ensure_import() {
     $name where {
-        if ($name <: not imported_from(source=$_)) {
-          $GLOBAL_BARE_IMPORTS += [$program, $name]
-        } else {
-            true
-        }
+      $GLOBAL_BARE_IMPORTS += [$name]
     }
 }
 
