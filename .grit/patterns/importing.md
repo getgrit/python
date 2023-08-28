@@ -115,6 +115,21 @@ from typing import List
 
 ```
 
+## ensure_import_from
+
+```python
+import pydantic
+
+unittest.TestCase()
+```
+
+```python
+import pydantic
+import unittest
+
+unittest.TestCase()
+```
+
 ## Ensure no duplicate imports
 
 ```python
