@@ -92,7 +92,7 @@ pattern ensure_import_from($source) {
     }
 }
 
-pattern ensure_import() {
+pattern ensure_imported() {
     $name where {
       and {
         $program <: not contains python_import(source=$source) where {
@@ -114,7 +114,7 @@ and {
             $test <: ensure_import_from($source),
         },
         `othermodule` as $other where {
-            $other <: ensure_import()
+            $other <: ensure_imported()
         },
     },
     after_each_file()
