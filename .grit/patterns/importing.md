@@ -94,7 +94,12 @@ pattern ensure_import_from($source) {
 
 pattern ensure_import() {
     $name where {
-      $GLOBAL_BARE_IMPORTS += [$name]
+      and {
+        $program <: not contains python_import(source=$source) where {
+          $source = $name,
+        },
+        $GLOBAL_BARE_IMPORTS += [$name]
+      }
     }
 }
 
@@ -165,6 +170,20 @@ unittest.TestCase()
 ## Add a bare import
 
 ```python
+othermodule.TestCase()
+```
+
+```python
+import othermodule
+
+othermodule.TestCase()
+```
+
+## Do not add duplicate bare imports
+
+```python
+import othermodule
+
 othermodule.TestCase()
 ```
 
