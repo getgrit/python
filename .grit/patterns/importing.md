@@ -39,7 +39,7 @@ pattern process_one_source($p, $all_imports) {
         if ($p <: module(statements = some python_import($imports, $source))) {
             $imports => `$imports, $joined_imported_names`
         } else {
-            $all_imports += `import { $joined_imported_names } from $source;\n`
+            $all_imports += `from $source import $joined_imported_names\n`
         }
     }
 }
@@ -91,8 +91,8 @@ and {
         python_import(source=`pydantic`) => .,
         python_import(source=`fools`) => .,
         `unittest` as $test where {
-         $source = `"unittest"`,
-         $test <: ensure_import_from($source),
+            $source = `testing`,
+            $test <: ensure_import_from($source),
         },
     },
     after_each_file()
@@ -118,14 +118,15 @@ from typing import List
 ## ensure_import_from
 
 ```python
-import pydantic
+import somewhere
 
 unittest.TestCase()
 ```
 
 ```python
-import pydantic
-import unittest
+from testing import unittest
+
+import somewhere
 
 unittest.TestCase()
 ```
