@@ -36,10 +36,16 @@ pattern process_one_source($p, $all_imports) {
         $GLOBAL_IMPORTED_NAMES <: some bubble($p, $source, $imported_names, $all_imports) [$p, $name, $source] where {
             $imported_names += $name,
         },
-        $joined_imported_names = join(list = $imported_names, separator = ", "),
         if ($p <: module(statements = some python_import($imports, $source))) {
-            $imports => `$imports, $joined_imported_names`
+          $pruned_imports = [],
+          $imported_names <: some bubble($pruned_imports, $imports) $candidate where {
+            !$imports <: some $candidate,
+            $pruned_imports += $candidate
+          },
+          $joined_imported_names = join(list = $pruned_imports, separator = ", "),
+          $imports => `$imports, $joined_imported_names`
         } else {
+            $joined_imported_names = join(list = $imported_names, separator = ", "),
             $all_imports += `from $source import $joined_imported_names\n`
         }
     }
