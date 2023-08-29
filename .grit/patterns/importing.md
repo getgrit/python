@@ -109,9 +109,11 @@ and {
     contains or {
         python_import(source=`pydantic`) => .,
         python_import(source=`fools`) => .,
-        `unittest` as $test where {
+        `$testlib.TestCase` where {
+            $newtest = `newtest`,
+            $testlib <: `unittest` => `$newtest`,
             $source = `testing`,
-            $test <: ensure_import_from($source),
+            $newtest <: ensure_import_from($source),
         },
         `othermodule` as $other where {
             $other <: ensure_imported()
@@ -146,23 +148,37 @@ unittest.TestCase()
 ```
 
 ```python
-from testing import unittest
+from testing import newtest
 
 import somewhere
 
-unittest.TestCase()
+newtest.TestCase()
 ```
 
 ## Ensure no duplicate imports
 
 ```python
-from testing import unittest, another
+from testing import newtest, unittest
 
 unittest.TestCase()
 ```
 
 ```python
-from testing import unittest, another
+from testing import newtest, unittest
+
+newtest.TestCase()
+```
+
+## Ensure we don't append to the same import
+
+```python
+from testing import something, unittest, newtest
+
+unittest.TestCase()
+```
+
+```python
+from testing import something, unittest, newtest
 
 unittest.TestCase()
 ```
