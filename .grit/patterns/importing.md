@@ -172,15 +172,15 @@ newtest.TestCase()
 ## Ensure we don't append to the same import
 
 ```python
-from testing import something, unittest, newtest
+from testing import unittest, newtest
 
 unittest.TestCase()
 ```
 
 ```python
-from testing import something, unittest, newtest
+from testing import unittest, newtest
 
-unittest.TestCase()
+newtest.TestCase()
 ```
 
 ## Add a bare import
