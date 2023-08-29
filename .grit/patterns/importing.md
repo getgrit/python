@@ -112,8 +112,7 @@ and {
         `$testlib.TestCase` where {
             $newtest = `newtest`,
             $testlib <: `unittest` => `$newtest`,
-            $source = `testing`,
-            $newtest <: ensure_import_from($source),
+            $newtest <: ensure_import_from(source=`testing`),
         },
         `othermodule` as $other where {
             $other <: ensure_imported()
@@ -181,6 +180,24 @@ unittest.TestCase()
 from testing import unittest, newtest
 
 newtest.TestCase()
+```
+
+## Ensure we handle nested modules correctly
+
+```python
+from ourlib.goodlib import thingbob, newbob
+
+newbob.caller()
+
+thingbob.caller()
+```
+
+```python
+from ourlib.goodlib import thingbob, newbob
+
+newbob.caller()
+
+newbob.caller()
 ```
 
 ## Add a bare import
