@@ -117,6 +117,11 @@ and {
         `othermodule` as $other where {
             $other <: ensure_imported()
         },
+        `$bob.caller` where {
+          $newbob = `newbob`,
+          $bob <: `thingbob` => `$newbob`,
+          $newbob <: ensure_import_from(source=`ourlib.goodlib`),
+        }
     },
     after_each_file()
 }
