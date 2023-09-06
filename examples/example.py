@@ -1,9 +1,10 @@
 def thing():
-    things = [
-        "Hello",
-        "World",
-        "Funky"
-    ]
-    print("things", things)
+	things = [
+		"Hello",
+		"World2",
+		"World3",
+		"Funky"
+	]
+	print("things", things)
 
 thing()
