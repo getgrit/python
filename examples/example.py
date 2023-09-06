@@ -2,7 +2,10 @@ def thing():
 	things = [
 		"Hello",
 		"World",
-		"Funky"
+		"Funky",
+        "World",
+		"Thing",
+	    "World",
 	]
 	print("things", things)
 
