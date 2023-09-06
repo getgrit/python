@@ -1,8 +1,7 @@
 def thing():
 	things = [
 		"Hello",
-		"World2",
-		"World3",
+		"World",
 		"Funky"
 	]
 	print("things", things)
