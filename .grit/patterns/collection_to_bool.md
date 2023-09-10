@@ -10,7 +10,7 @@ language python
 
 or {
     `if $cond:`,
-    r"elif (.*):"($cond),
+    elif_clause(condition=$cond),
     `while $cond:`,
 } where $cond <: or {
     `[$elms]` as $arr where {

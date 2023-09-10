@@ -2,7 +2,7 @@
 title: Comprehension To Generator
 ---
 
-Replace unneeded comprehension with generator.
+Replace unneeded list comprehensions with direct generators.
 
 ```grit
 engine marzano(0.1)

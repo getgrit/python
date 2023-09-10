@@ -1,8 +1,8 @@
 ---
-title: Aware DateTime for UTC
+title: Prefer timezone-aware datetimes to utcnow()
 ---
 
-To get the current time in UTC use an aware datetime object with the timezone explicitly set to UTC.
+To get the current time in UTC use a datetime object with the timezone explicitly set to UTC.
 
 ```grit
 engine marzano(0.1)

@@ -2,7 +2,7 @@
 title: Boolean If Expression Identity
 ---
 
-When a boolean expression is used in an if-else to get a boolean value. Use the boolean value directly.
+When a boolean expression is used in an if-else to get a boolean value, use the boolean value directly.
 
 ```grit
 engine marzano(0.1)

@@ -1,5 +1,5 @@
 ---
-title: Delete Comprehension
+title: Use comprehensions for deleting from dictionaries
 ---
 
 Replaces cases where deletions are made via `for` loops with comprehensions.
