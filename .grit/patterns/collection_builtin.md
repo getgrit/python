@@ -21,10 +21,14 @@ or {
 squares = list(x * x for x in y)
 squares = set(x * x for x in y)
 squares = dict((x, x * x) for x in xs)
+
+squares = any(x * x for x in y)
 ```
 
 ```python
 squares = [x * x for x in y]
 squares = {x * x for x in y}
 squares = {x: x * x for x in xs}
+
+squares = any(x * x for x in y)
 ```

@@ -37,6 +37,12 @@ if condition:
     x = "abcd"
 else:
     x = "efgh"
+
+if condition:
+    y = 10
+    x = do_something(y)
+else:
+    x = "efgh"
 ```
 
 ```python
@@ -45,4 +51,10 @@ x = 1 if condition else 2
 x = 1.0 if condition else 2.0
 
 x = "abcd" if condition else "efgh"
+
+if condition:
+    y = 10
+    x = do_something(y)
+else:
+    x = "efgh"
 ```

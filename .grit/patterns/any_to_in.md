@@ -14,13 +14,17 @@ language python
 # Convert any to in
 
 ```python
-def shout_about_bowlers(hats: list[str]) -> None:
-    if any(hat == "bowler" for hat in hats):
-        shout("I have a bowler hat!")
+if any(hat == "bowler" for hat in hats):
+    shout("I have a bowler hat!")
+
+if any(hat > "bowler" for hat in hats):
+    shout("I have a bowler hat!")
 ```
 
 ```python
-def shout_about_bowlers(hats: list[str]) -> None:
-    if "bowler" in hats:
-        shout("I have a bowler hat!")
+if "bowler" in hats:
+    shout("I have a bowler hat!")
+
+if any(hat > "bowler" for hat in hats):
+    shout("I have a bowler hat!")
 ```

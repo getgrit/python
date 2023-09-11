@@ -46,6 +46,11 @@ if (1, 2, 3):
     baz()
 if ():
     baz()
+
+if "foo":
+    baz()
+if [x for x in y]:
+    baz()
 ```
 
 ```python
@@ -64,5 +69,10 @@ if True:
 if True:
     baz()
 if False:
+    baz()
+
+if "foo":
+    baz()
+if [x for x in y]:
     baz()
 ```

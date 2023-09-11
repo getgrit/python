@@ -85,11 +85,11 @@ pattern builtin() {
     }
 }
 
-// `$after_var` where {
-//     $after_var <: after `$var = $_` where $var <: builtin() => `my_$var` where {
-//         $after_var <: maybe contains $var => `my_$var`
-//     }
-// }
+`$after_var` where {
+    $after_var <: after `$var = $_` where $var <: builtin() => `my_$var` where {
+        $after_var <: maybe contains $var => `my_$var`
+    }
+}
 ```
 
 # Rename builtin shadow variables

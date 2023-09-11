@@ -34,9 +34,13 @@ pattern accept_generator() {
 ```python
 hat_found = any([is_hat(item) for item in wardrobe])
 hat_found = list([is_hat(item) for item in wardrobe])
+
+hat_found = dict([(item, is_hat(item)) for item in wardrobe])
 ```
 
 ```python
 hat_found = any(is_hat(item) for item in wardrobe)
 hat_found = list(is_hat(item) for item in wardrobe)
+
+hat_found = dict([(item, is_hat(item)) for item in wardrobe])
 ```
