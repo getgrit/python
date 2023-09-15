@@ -26,6 +26,22 @@ pattern rename_resource() {
     }
 }
 
+pattern rename_resource_cls() {
+    or {
+        r"Audio" => `resources.Audio`,
+        r"ChatCompletion" => `resources.chat.Completions`,
+        r"Completion" => `resources.Completions`,
+        r"Edit" => `resources.Edits`,
+        r"Embedding" => `resources.Embeddings`,
+        r"File" => `resources.Files`,
+        r"FineTune" => `resources.FineTunes`,
+        r"FineTuningJob" => `resources.FineTuning`,
+        r"Image" => `resources.Images`,
+        r"Model" => `resources.Models`,
+        r"Moderation" => `resources.Moderations`,
+    }
+}
+
 pattern depreciated_resource() {
     or {
         `Customer`,
@@ -34,6 +50,16 @@ pattern depreciated_resource() {
         `ErrorObject`,
     }
 }
+
+pattern depreciated_resource_cls() {
+    or {
+        r"Customer",
+        r"Deployment",
+        r"Engine",
+        r"ErrorObject",
+    }
+}
+
 
 pattern rename_func($has_sync, $has_async, $res, $stmt, $params) {
     $func where {
@@ -77,7 +103,7 @@ pattern change_import($has_sync, $has_async, $need_openai_import) {
     }
 }
 
-pattern rewrite_whole_call($import, $has_sync, $has_async, $res, $func, $params, $stmt, $body) {
+pattern rewrite_whole_fn_call($import, $has_sync, $has_async, $res, $func, $params, $stmt, $body) {
     or {
         rename_resource() where {
             $import = `true`,
@@ -91,6 +117,61 @@ pattern rewrite_whole_call($import, $has_sync, $has_async, $res, $func, $params,
             $stmt_whole => `# TODO: The resource '$dep_res' has been depreciated\n$stmt_whole`,
         }
     }
+}
+
+pattern unittest_patch() {
+    or {
+        decorated_definition($decorators, definition=$_) where {
+            $decorators <: contains bubble decorator(value=`patch($cls_path)`) as $stmt where {
+                $cls_path <: contains r"openai\.([a-zA-Z0-9]+)(?:.[^,]+)?"($res),
+                if ($res <: rename_resource_cls()) {} else {
+                    $res <: depreciated_resource_cls(),
+                    $stmt => `# TODO: The resource '$res' has been depreciated\n$stmt`,
+                }
+            }
+        },
+        function_definition($body) where {
+            $body <: contains bubble($body) or {
+                `patch.object($params)`,
+                `patch($params)`,
+            } as $stmt where {
+                $params <: contains bubble($body, $stmt) r"openai\.([a-zA-Z0-9]+)(?:.[^,]+)?"($res) where or {
+                    $res <: rename_resource_cls(),
+                    and {
+                        $res <: depreciated_resource_cls(),
+                        $line = $stmt,
+                        if ($body <: contains or { `with $stmt:`, `with $stmt as $_:` } as $l) {
+                            $line = $l,
+                        },
+                        $line => `# TODO: The resource '$res' has been depreciated\n$line`,
+                    }
+                }
+            },
+        }
+    }
+}
+
+pattern pytest_patch() {
+    decorated_definition($decorators, $definition) where {
+        $decorators <: contains decorator(value=`pytest.fixture`),
+        $definition <: bubble function_definition($body, $parameters) where {
+            $parameters <: [$monkeypatch, ...],
+            $body <: contains bubble($monkeypatch) or {
+                `$monkeypatch.setattr($params)` as $stmt where {
+                    $params <: contains bubble($stmt) r"openai\.([a-zA-Z0-9]+)(?:.[^,]+)?"($res) where or {
+                        $res <: rename_resource_cls(),
+                        $stmt => `# TODO: The resource '$res' has been depreciated\n$stmt`,
+                    }
+                },
+                `monkeypatch.delattr($params)` as $stmt where {
+                    $params <: contains bubble($stmt) r"openai\.([a-zA-Z0-9]+)(?:.[^,]+)?"($res) where or {
+                        $res <: rename_resource_cls(),
+                        $stmt => `# TODO: The resource '$res' has been depreciated\n$stmt`,
+                    }
+                },
+            }
+        },
+    },
 }
 
 file($body) where {
@@ -113,7 +194,7 @@ file($body) where {
 
     $body <: maybe contains `import openai` as $import_stmt where {
         $body <: contains bubble($has_sync, $has_async, $has_openai_import, $body) `openai.$res.$func($params)` as $stmt where {
-            $res <: rewrite_whole_call(import = $has_openai_import, $has_sync, $has_async, $res, $func, $params, $stmt, $body),
+            $res <: rewrite_whole_fn_call(import = $has_openai_import, $has_sync, $has_async, $res, $func, $params, $stmt, $body),
         },
     },
 
@@ -121,7 +202,7 @@ file($body) where {
         $has_partial_import = `true`,
         $body <: contains bubble($has_sync, $has_async, $resources) `$res.$func($params)` as $stmt where {
             $resources <: contains $res,
-            $res <: rewrite_whole_call($import, $has_sync, $has_async, $res, $func, $params, $stmt, $body),
+            $res <: rewrite_whole_fn_call($import, $has_sync, $has_async, $res, $func, $params, $stmt, $body),
         }
     },
 
@@ -133,6 +214,9 @@ file($body) where {
     } else if ($has_partial_import <: `true`) {
         $partial_import_stmt <: change_import($has_sync, $has_async, $need_openai_import),
     },
+
+    $body <: maybe contains unittest_patch(),
+    $body <: maybe contains pytest_patch(),
 }
 ```
 
@@ -277,4 +361,76 @@ import openai
 completion = openai.Customer.create(model="davinci-002", prompt="Hello world")
 # TODO: The resource 'Deployment' has been depreciated
 chat_completion = openai.Deployment.create(model="gpt-3.5-turbo", messages=[{"role": "user", "content": "Hello world"}])
+```
+
+# Migrate unittest
+
+```python
+@patch('openai.Completion')
+@patch('openai.Customer')
+def test(MockClass1, MockClass2):
+    with patch.object(openai.Completion, 'method', return_value=None):
+        pass
+    with patch.object(openai.Customer, 'method', return_value=None):
+        pass
+    with patch("openai.Engine.list"):
+        pass
+    pass
+```
+
+```python
+@patch('openai.resources.Completions')
+# TODO: The resource 'Customer' has been depreciated
+@patch('openai.Customer')
+def test(MockClass1, MockClass2):
+    with patch.object(openai.resources.Completions, 'method', return_value=None):
+        pass
+    # TODO: The resource 'Customer' has been depreciated
+    with patch.object(openai.Customer, 'method', return_value=None):
+        pass
+    # TODO: The resource 'Engine' has been depreciated
+    with patch("openai.Engine.list"):
+        pass
+    pass
+```
+
+# Migrate pytest
+
+```python
+@pytest.fixture
+def mocked_GET_pos(monkeypatch):
+    monkeypatch.setattr(openai.Completion, 'GET', lambda: True)
+    monkeypatch.delattr(openai.Completion, 'PUT', lambda: True)
+
+@pytest.fixture
+def mocked_GET_neg(monkeypatch):
+    monkeypatch.setattr(openai.Customer, 'GET', lambda: False)
+
+@pytest.fixture
+def mocked_GET_raises(monkeypatch, other):
+    def raise_():
+        raise Exception()
+    monkeypatch.setattr(openai.Engine.list, 'GET', raise_)
+    monkeypatch.delattr(openai.Engine.list, 'PUT', lambda: True)
+```
+
+```python
+@pytest.fixture
+def mocked_GET_pos(monkeypatch):
+    monkeypatch.setattr(openai.resources.Completions, 'GET', lambda: True)
+    monkeypatch.delattr(openai.resources.Completions, 'PUT', lambda: True)
+
+@pytest.fixture
+def mocked_GET_neg(monkeypatch):
+    # TODO: The resource 'Customer' has been depreciated
+    monkeypatch.setattr(openai.Customer, 'GET', lambda: False)
+
+@pytest.fixture
+def mocked_GET_raises(monkeypatch, other):
+    def raise_():
+        raise Exception()
+    # TODO: The resource 'Engine' has been depreciated
+    monkeypatch.setattr(openai.Engine.list, 'GET', raise_)
+    # TODO: The resource 'Engine' has been depreciated
+    monkeypatch.delattr(openai.Engine.list, 'PUT', lambda: True)
 ```
