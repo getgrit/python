@@ -23,8 +23,15 @@ pattern rename_resource() {
         `Image` => `images`,
         `Model` => `models`,
         `Moderation` => `moderations`,
-        // TODO: `Customer`, `Deployment`, `Engine`, `ErrorObject` are not converted to the new version.
-        //       There seems to be no equivalent items in the new version
+    }
+}
+
+pattern depreciated_resource() {
+    or {
+        `Customer`,
+        `Deployment`,
+        `Engine`,
+        `ErrorObject`,
     }
 }
 
@@ -58,7 +65,7 @@ pattern change_import($has_sync, $has_async, $need_openai_import) {
             $imports_and_defs += `from openai import OpenAI`,
             $imports_and_defs += ``, // Blank line
             $imports_and_defs += `client = OpenAI()`,
-        } else if ($has_async = `true`) {
+        } else if ($has_async <: `true`) {
             $imports_and_defs += `from openai import AsyncOpenAI`,
             $imports_and_defs += ``, // Blank line
             $imports_and_defs += `aclient = AsyncOpenAI()`,
@@ -67,6 +74,22 @@ pattern change_import($has_sync, $has_async, $need_openai_import) {
         $separator = `\n`,
         $formatted = join(list = $imports_and_defs, $separator),
         $stmt => `$formatted`,
+    }
+}
+
+pattern rewrite_whole_call($import, $has_sync, $has_async, $res, $func, $params, $stmt, $body) {
+    or {
+        rename_resource() where {
+            $import = `true`,
+            $func <: rename_func($has_sync, $has_async, $res, $stmt, $params),
+        },
+        depreciated_resource() as $dep_res where {
+            $stmt_whole = $stmt,
+            if ($body <: contains `$_ = $stmt` as $line) {
+                $stmt_whole = $line,
+            },
+            $stmt_whole => `# TODO: The resource '$dep_res' has been depreciated\n$stmt_whole`,
+        }
     }
 }
 
@@ -89,10 +112,8 @@ file($body) where {
     },
 
     $body <: maybe contains `import openai` as $import_stmt where {
-        $has_openai_import = `true`,
-        $body <: contains bubble($has_sync, $has_async) `openai.$res.$func($params)` as $stmt where {
-            $res <: rename_resource(),
-            $func <: rename_func($has_sync, $has_async, $res, $stmt, $params),
+        $body <: contains bubble($has_sync, $has_async, $has_openai_import, $body) `openai.$res.$func($params)` as $stmt where {
+            $res <: rewrite_whole_call(import = $has_openai_import, $has_sync, $has_async, $res, $func, $params, $stmt, $body),
         },
     },
 
@@ -100,8 +121,7 @@ file($body) where {
         $has_partial_import = `true`,
         $body <: contains bubble($has_sync, $has_async, $resources) `$res.$func($params)` as $stmt where {
             $resources <: contains $res,
-            $res <: rename_resource(),
-            $func <: rename_func($has_sync, $has_async, $res, $stmt, $params),
+            $res <: rewrite_whole_call($import, $has_sync, $has_async, $res, $func, $params, $stmt, $body),
         }
     },
 
@@ -158,7 +178,10 @@ chat_completion = await aclient.chat.completions.create(model="gpt-3.5-turbo", m
 import openai
 
 completion = openai.Completion.create(model="davinci-002", prompt="Hello world")
-chat_completion = await openai.ChatCompletion.acreate(model="gpt-3.5-turbo", messages=[{"role": "user", "content": "Hello world"}])
+chat_completion = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=[{"role": "user", "content": "Hello world"}])
+
+a_completion = await openai.Completion.acreate(model="davinci-002", prompt="Hello world")
+a_chat_completion = await openai.ChatCompletion.acreate(model="gpt-3.5-turbo", messages=[{"role": "user", "content": "Hello world"}])
 ```
 
 ```python
@@ -168,7 +191,10 @@ client = OpenAI()
 aclient = AsyncOpenAI()
 
 completion = client.completions.create(model="davinci-002", prompt="Hello world")
-chat_completion = await aclient.chat.completions.create(model="gpt-3.5-turbo", messages=[{"role": "user", "content": "Hello world"}])
+chat_completion = client.chat.completions.create(model="gpt-3.5-turbo", messages=[{"role": "user", "content": "Hello world"}])
+
+a_completion = await aclient.completions.create(model="davinci-002", prompt="Hello world")
+a_chat_completion = await aclient.chat.completions.create(model="gpt-3.5-turbo", messages=[{"role": "user", "content": "Hello world"}])
 ```
 
 # Change different kinds of import
@@ -233,4 +259,22 @@ try:
     chat_completion = client.chat.completions.create(model="gpt-3.5-turbo", messages=[{"role": "user", "content": "Hello world"}])
 except openai.RateLimitError as err:
     pass
+```
+
+# Mark deprecated api usage
+
+```python
+import openai
+
+completion = openai.Customer.create(model="davinci-002", prompt="Hello world")
+chat_completion = openai.Deployment.create(model="gpt-3.5-turbo", messages=[{"role": "user", "content": "Hello world"}])
+```
+
+```python
+import openai
+
+# TODO: The resource 'Customer' has been depreciated
+completion = openai.Customer.create(model="davinci-002", prompt="Hello world")
+# TODO: The resource 'Deployment' has been depreciated
+chat_completion = openai.Deployment.create(model="gpt-3.5-turbo", messages=[{"role": "user", "content": "Hello world"}])
 ```
