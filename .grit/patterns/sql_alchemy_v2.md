@@ -86,13 +86,72 @@ pattern no_nested_with_expr() {
     }
 }
 
+pattern get_directly_on_session() {
+    `$sess.query($cls).get($id)` => `$sess.get($cls, $id)`
+}
+
+pattern cmp_statements() {
+    r"^.+ (?:(?:==)|(?:>=)|(?:<=)|>|<) .+(?: (?:and)|(?:or) .+ (?:(?:==)|(?:>=)|(?:<=)|>|<) .+)*$",
+}
+
+pattern migrate_old_select_args($call_chain, $args, $new_stmt) {
+    $_ where {
+        if ($args <: contains list(elements=$items)) {
+            $call_chain += `select($items)`,
+        } else {
+            $call_chain += `select()`,
+        },
+        $args <: maybe contains keyword_argument(name=`select_from`, value=$table) where {
+            $call_chain += `select_from($table)`,
+        },
+        $args <: maybe contains keyword_argument(name=`order_by`, value=$col) where {
+            $call_chain += `order_by($col)`,
+        },
+        $args <: maybe contains cmp_statements() as $cmp_stmt where {
+            $call_chain += `where($cmp_stmt)`,
+        },
+        $new_stmt = join(list = $call_chain, separator = "."),
+    }
+}
+
+pattern migrate_pre_1_4_select() {
+    $call_chain = [],
+    or {
+        `select($args)`,
+        `$table.select($args)` where {
+            $call_chain += `$table`,
+        },
+    } as $stmt where or {
+        $args <: contains list(elements=$_),
+        $args <: contains keyword_argument(name=$_, value=$_),
+        $args <: contains cmp_statements(),
+    },
+    migrate_old_select_args($call_chain, $args, $new_stmt),
+    $stmt => `$new_stmt`,
+}
+
+pattern migrate_post_1_4_create_legacy_select() {
+    $call_chain = [],
+    or {
+        `create_legacy_select($args)`,
+        `$table.create_legacy_select($args)` where {
+            $call_chain += `$table`,
+        },
+    } as $stmt,
+    migrate_old_select_args($call_chain, $args, $new_stmt),
+    $stmt => `$new_stmt`,
+}
+
 
 file($body) where $body <: any {
     contains bulk_update(),
     contains convert_to_subquery(),
     contains c_to_selected_columns(),
     contains select_list_to_vargs(),
-    contains no_nested_with_expr()
+    contains no_nested_with_expr(),
+    contains get_directly_on_session(),
+    contains migrate_pre_1_4_select(),
+    contains migrate_post_1_4_create_legacy_select(),
 }
 ```
 
@@ -117,6 +176,8 @@ s2 = select(User).options(with_expression(User.expr, literal("u2")))
 
 stmt = union_all(s1, s2)
 session.scalars(select(User).from_statement(stmt)).all()
+
+user_obj = session.query(User).get(5)
 ```
 
 ```python
@@ -143,4 +204,32 @@ session.scalars(
     .from_statement(stmt)
     .options(with_expression(User.expr, stmt.selected_columns.some_literal))
 ).all()
+
+user_obj = session.get(User, 5)
+```
+
+# Migrate pre 1.4 select and post 1.4 legacy select statements
+
+```python
+stmt = select([1], select_from=table, order_by=table.c.id)
+
+stmt = select([table.c.x], table.c.id == 5)
+
+stmt = table.select(table.c.id == 5)
+
+stmt = select([table.c.x, table.c.y])
+
+stmt = create_legacy_select([table.c.x, table.c.y])
+```
+
+```python
+stmt = select(1).select_from(table).order_by(table.c.id)
+
+stmt = select(table.c.x).where(table.c.id == 5)
+
+stmt = table.select().where(table.c.id == 5)
+
+stmt = select(table.c.x, table.c.y)
+
+stmt = select(table.c.x, table.c.y)
 ```
