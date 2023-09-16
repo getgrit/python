@@ -42,7 +42,7 @@ pattern rename_resource_cls() {
     }
 }
 
-pattern depreciated_resource() {
+pattern deprecated_resource() {
     or {
         `Customer`,
         `Deployment`,
@@ -51,7 +51,7 @@ pattern depreciated_resource() {
     }
 }
 
-pattern depreciated_resource_cls() {
+pattern deprecated_resource_cls() {
     or {
         r"Customer",
         r"Deployment",
@@ -109,12 +109,12 @@ pattern rewrite_whole_fn_call($import, $has_sync, $has_async, $res, $func, $para
             $import = `true`,
             $func <: rename_func($has_sync, $has_async, $res, $stmt, $params),
         },
-        depreciated_resource() as $dep_res where {
+        deprecated_resource() as $dep_res where {
             $stmt_whole = $stmt,
             if ($body <: contains `$_ = $stmt` as $line) {
                 $stmt_whole = $line,
             },
-            $stmt_whole => `# TODO: The resource '$dep_res' has been depreciated\n$stmt_whole`,
+            $stmt_whole => `# TODO: The resource '$dep_res' has been deprecated\n$stmt_whole`,
         }
     }
 }
@@ -125,8 +125,8 @@ pattern unittest_patch() {
             $decorators <: contains bubble decorator(value=`patch($cls_path)`) as $stmt where {
                 $cls_path <: contains r"openai\.([a-zA-Z0-9]+)(?:.[^,]+)?"($res),
                 if ($res <: rename_resource_cls()) {} else {
-                    $res <: depreciated_resource_cls(),
-                    $stmt => `# TODO: The resource '$res' has been depreciated\n$stmt`,
+                    $res <: deprecated_resource_cls(),
+                    $stmt => `# TODO: The resource '$res' has been deprecated\n$stmt`,
                 }
             }
         },
@@ -138,12 +138,12 @@ pattern unittest_patch() {
                 $params <: contains bubble($body, $stmt) r"openai\.([a-zA-Z0-9]+)(?:.[^,]+)?"($res) where or {
                     $res <: rename_resource_cls(),
                     and {
-                        $res <: depreciated_resource_cls(),
+                        $res <: deprecated_resource_cls(),
                         $line = $stmt,
                         if ($body <: contains or { `with $stmt:`, `with $stmt as $_:` } as $l) {
                             $line = $l,
                         },
-                        $line => `# TODO: The resource '$res' has been depreciated\n$line`,
+                        $line => `# TODO: The resource '$res' has been deprecated\n$line`,
                     }
                 }
             },
@@ -160,13 +160,13 @@ pattern pytest_patch() {
                 `$monkeypatch.setattr($params)` as $stmt where {
                     $params <: contains bubble($stmt) r"openai\.([a-zA-Z0-9]+)(?:.[^,]+)?"($res) where or {
                         $res <: rename_resource_cls(),
-                        $stmt => `# TODO: The resource '$res' has been depreciated\n$stmt`,
+                        $stmt => `# TODO: The resource '$res' has been deprecated\n$stmt`,
                     }
                 },
                 `monkeypatch.delattr($params)` as $stmt where {
                     $params <: contains bubble($stmt) r"openai\.([a-zA-Z0-9]+)(?:.[^,]+)?"($res) where or {
                         $res <: rename_resource_cls(),
-                        $stmt => `# TODO: The resource '$res' has been depreciated\n$stmt`,
+                        $stmt => `# TODO: The resource '$res' has been deprecated\n$stmt`,
                     }
                 },
             }
@@ -357,9 +357,9 @@ chat_completion = openai.Deployment.create(model="gpt-3.5-turbo", messages=[{"ro
 ```python
 import openai
 
-# TODO: The resource 'Customer' has been depreciated
+# TODO: The resource 'Customer' has been deprecated
 completion = openai.Customer.create(model="davinci-002", prompt="Hello world")
-# TODO: The resource 'Deployment' has been depreciated
+# TODO: The resource 'Deployment' has been deprecated
 chat_completion = openai.Deployment.create(model="gpt-3.5-turbo", messages=[{"role": "user", "content": "Hello world"}])
 ```
 
@@ -380,15 +380,15 @@ def test(MockClass1, MockClass2):
 
 ```python
 @patch('openai.resources.Completions')
-# TODO: The resource 'Customer' has been depreciated
+# TODO: The resource 'Customer' has been deprecated
 @patch('openai.Customer')
 def test(MockClass1, MockClass2):
     with patch.object(openai.resources.Completions, 'method', return_value=None):
         pass
-    # TODO: The resource 'Customer' has been depreciated
+    # TODO: The resource 'Customer' has been deprecated
     with patch.object(openai.Customer, 'method', return_value=None):
         pass
-    # TODO: The resource 'Engine' has been depreciated
+    # TODO: The resource 'Engine' has been deprecated
     with patch("openai.Engine.list"):
         pass
     pass
@@ -422,15 +422,15 @@ def mocked_GET_pos(monkeypatch):
 
 @pytest.fixture
 def mocked_GET_neg(monkeypatch):
-    # TODO: The resource 'Customer' has been depreciated
+    # TODO: The resource 'Customer' has been deprecated
     monkeypatch.setattr(openai.Customer, 'GET', lambda: False)
 
 @pytest.fixture
 def mocked_GET_raises(monkeypatch, other):
     def raise_():
         raise Exception()
-    # TODO: The resource 'Engine' has been depreciated
+    # TODO: The resource 'Engine' has been deprecated
     monkeypatch.setattr(openai.Engine.list, 'GET', raise_)
-    # TODO: The resource 'Engine' has been depreciated
+    # TODO: The resource 'Engine' has been deprecated
     monkeypatch.delattr(openai.Engine.list, 'PUT', lambda: True)
 ```
