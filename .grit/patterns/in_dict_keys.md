@@ -15,7 +15,7 @@ language python
 `$var in $dict.keys()` => `$var in $dict`
 ```
 
-## In dict instead of in dict.keys()
+## Replace `in dict.keys()` with `in dict`
 
 ```python
 found = key in foo.keys()
