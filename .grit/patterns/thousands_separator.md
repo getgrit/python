@@ -14,24 +14,24 @@ language python
 `$var = $number` where {
     or {
         and {
-            $number <: r"(-?\d+)(\d{3})(\d{3})(\d{3})(\d{3})((?:\.\d+)?)$"($head, $g1, $g2, $g3, $g4, $tail),
+            $number <: r"(-?\d+)(\d{3})(\d{3})(\d{3})(\d{3})((?:\.\d+)?)$"($head, $g1, $g2, $g3, $g4, $fractional),
             $groups = [$head, $g1, $g2, $g3, $g4],
         },
         and {
-            $number <: r"(-?\d+)(\d{3})(\d{3})(\d{3})((?:\.\d+)?)$"($head, $g1, $g2, $g3, $tail),
+            $number <: r"(-?\d+)(\d{3})(\d{3})(\d{3})((?:\.\d+)?)$"($head, $g1, $g2, $g3, $fractional),
             $groups = [$head, $g1, $g2, $g3],
         },
         and {
-            $number <: r"(-?\d+)(\d{3})(\d{3})((?:\.\d+)?)$"($head, $group, $group2, $tail),
-            $groups = [$head, $group, $group2],
+            $number <: r"(-?\d+)(\d{3})(\d{3})((?:\.\d+)?)$"($head, $g1, $g2, $fractional),
+            $groups = [$head, $g1, $g2],
         },
         and {
-            $number <: r"(-?\d+)(\d{3})((?:\.\d+)?)$"($head, $group, $tail),
+            $number <: r"(-?\d+)(\d{3})((?:\.\d+)?)$"($head, $group, $fractional),
             $groups = [$head, $group],
         },
     },
     $formatted = join(list = $groups, separator = "_"),
-    $formatted = join(list = [$formatted, $tail], separator = ""),
+    $formatted = join(list = [$formatted, $fractional], separator = ""),
 } => `$var = $formatted`
 ```
 
