@@ -16,10 +16,7 @@ language python
 with $clause1:
     with $clause2:
         $with_body
-` where {
-    $clause1 <: with_clause(),
-    $clause2 <: with_clause(),
-} => `with $clause1, $clause2:
+` => `with $clause1, $clause2:
     $with_body`
 ```
 
