@@ -26,13 +26,19 @@ or {`$c1 and $c2`, `$c2 and $c1`} as $all where {
 # Two sided bound checks
 
 ```python
-x < 10 and x > 5
-100 >= my_var and my_var > -5
-x < get_strict_max() and get_min() <=  x
+if x < 10 and x > 5:
+    return "Ok"
+elif 100 >= my_var and my_var > -5:
+    return None
+else:
+    return (x < get_strict_max() and get_min() <=  x)
 ```
 
 ```python
-5 < x < 10
--5 < my_var <= 100
-get_min() <= x < get_strict_max()
+if 5 < x < 10:
+    return "Ok"
+elif -5 < my_var <= 100:
+    return None
+else:
+    return (get_min() <= x < get_strict_max())
 ```
