@@ -24,9 +24,8 @@ pattern prod_accum($accum, $factor) {
     }
 }
 
-`$for` where {
+for_statement(body=block(statements=[prod_accum(accum = $var, factor = $left)]), $left, $right) as $for where {
     $for <: after prod_init(accum = $var) => .,
-    $for <: for_statement(body=block(statements=[prod_accum(accum = $var, factor = $left)]), $left, $right),
     $left <: identifier(),
     $import = `math`,
     $import <: ensure_imported(),
