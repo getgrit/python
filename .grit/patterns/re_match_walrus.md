@@ -56,13 +56,11 @@ pattern match_function() {
     }
 }
 
-`$if` where {
+if_statement($alternative, $condition, $consequence) as $if where {
     $if <: after `$var = $match_func($regex)` => . where {
         $match_func <: match_function()
     },
-    $if <: if_statement($alternative, $condition, $consequence) where {
-        $condition <: `$var` => `$var := $match_func($regex)`
-    },
+    $condition <: `$var` => `$var := $match_func($regex)`,
     if ($alternative <: "") {
         $block = $consequence,
     }
