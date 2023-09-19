@@ -1,0 +1,154 @@
+---
+title: Walrus operator for match in if
+---
+
+Use the walrus operator for snippets with the pattern:
+
+```python
+# Convert this:
+math = re.match(regex):
+if match:
+   ...
+
+# To this:
+if math := re.match(regex):
+   ...
+```
+
+Limitations:
+* If the match function is imported with an alias (e.g. `from re import match as m`), it will not be transformed.
+* When `re.match` is used, we do not check that `re` comes from `import re`.
+
+
+```grit
+engine marzano(0.1)
+language python
+
+pattern re_match_function() {
+    or {
+        `search`,
+        `match`,
+        `fullmatch`,
+    }
+}
+
+pattern imported_match_function() {
+    $func where {
+        $func <: re_match_function(),
+        $func <: imported_from(source = `re`),
+    },
+}
+
+// TODO: we should also check if `re` is imported
+pattern explicit_match_function() {
+    `re.$func` where {
+        $func <: re_match_function()
+    },
+    //$_ where {
+    //    $program <: contains `import re`,
+    //}
+}
+
+pattern match_function() {
+    or {
+        imported_match_function(),
+        explicit_match_function(),
+    }
+}
+
+`$if` where {
+    $if <: after `$var = $match_func($regex)` => . where {
+        $match_func <: match_function()
+    },
+    $if <: if_statement($alternative, $condition, $consequence) where {
+        $condition <: `$var` => `$var := $match_func($regex)`
+    },
+    if ($alternative <: "") {
+        $block = $consequence,
+    }
+    else {
+        $separator = `\n`,
+        $block = join(list = [$consequence, $alternative], $separator),
+    }
+} => `if $condition:
+    $block`
+
+```
+
+## Transforms a log statement
+
+```python
+# re.match is transformed
+match = re.match("hello")
+if match:
+    print("there is a match")
+elif x > 10:
+    print("no match")
+else:
+    print("no match")
+
+# re.fullmatch is transformed
+match = re.fullmatch("hello")
+if match:
+    pass
+
+# search is re.search and thus is transformed
+from re import search
+match = search("hello")
+if match:
+    pass
+
+# match is not re.match and thus is not transformed
+match = lambda s: False
+match = match("hello")
+if match:
+    pass
+
+# re.sub is not transformed
+sub = re.sub("hello", "bye")
+if sub:
+    pass
+
+# regex.fullmatch is not transformed
+match = regex.fullmatch("hello")
+if match:
+    pass
+```
+
+```python
+# re.match is transformed
+
+if match := re.match("hello"):
+    print("there is a match")
+elif x > 10:
+    print("no match")
+else:
+    print("no match")
+
+# re.fullmatch is transformed
+
+if match := re.fullmatch("hello"):
+    pass
+
+# search is re.search and thus is transformed
+from re import search
+
+if match := search("hello"):
+    pass
+
+# match is not re.match and thus is not transformed
+match = lambda s: False
+match = match("hello")
+if match:
+    pass
+
+# re.sub is not transformed
+sub = re.sub("hello", "bye")
+if sub:
+    pass
+
+# regex.fullmatch is not transformed
+match = regex.fullmatch("hello")
+if match:
+    pass
+```
