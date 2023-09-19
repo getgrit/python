@@ -13,10 +13,13 @@ language python
 
 
 `
-with $context1 as $as1:
-    with $context2 as $as2:
+with $clause1:
+    with $clause2:
         $with_body
-` => `with $context1 as $as1, $context2 as $as2:
+` where {
+    $clause1 <: with_clause(),
+    $clause2 <: with_clause(),
+} => `with $clause1, $clause2:
     $with_body`
 ```
 
@@ -25,6 +28,14 @@ with $context1 as $as1:
 ```python
 with open("file1.txt") as f1:
     with open("file2.txt", "r+") as f2:
+        pass
+
+with A() as a, B() as b:
+    with C() as c:
+        pass
+
+with A() as a:
+    with B() as b, C() as c:
         pass
 
 # TODO: should be joined into a single with
@@ -36,6 +47,12 @@ with A() as a:
 
 ```python
 with open("file1.txt") as f1, open("file2.txt", "r+") as f2:
+    pass
+
+with A() as a, B() as b, C() as c:
+    pass
+
+with A() as a, B() as b, C() as c:
     pass
 
 # TODO: should be joined into a single with
