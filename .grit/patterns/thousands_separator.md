@@ -9,8 +9,7 @@ engine marzano(0.1)
 language python
 
 
-`$number` where {
-    $number <: or { integer(), float() },
+or { integer(), float() } as $number where {
     or {
         and {
             $number <: r"(-?\d+)(\d{3})(\d{3})(\d{3})(\d{3})((?:\.\d+)?)$"($head, $g1, $g2, $g3, $g4, $fractional),
