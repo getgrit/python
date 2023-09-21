@@ -28,14 +28,10 @@ pattern imported_match_function() {
     },
 }
 
-// TODO: we should also check if `re` is imported
 pattern explicit_match_function() {
     `re.$func` where {
         $func <: re_match_function()
     },
-    //$_ where {
-    //    $program <: contains `import re`,
-    //}
 }
 
 pattern match_function() {
