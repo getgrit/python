@@ -2,18 +2,7 @@
 title: Walrus operator for match in if
 ---
 
-Use the walrus operator for snippets with the pattern:
-
-```python
-# Convert this:
-math = re.match(regex):
-if match:
-   ...
-
-# To this:
-if math := re.match(regex):
-   ...
-```
+Use the walrus operator for snippets with a match followed by an if.
 
 Limitations:
 * If the match function is imported with an alias (e.g. `from re import match as m`), it will not be transformed.
@@ -73,10 +62,9 @@ if_statement($alternative, $condition, $consequence) as $if where {
 
 ```
 
-## Transforms a log statement
+## Simple match and if
 
 ```python
-# re.match is transformed
 match = re.match("hello")
 if match:
     print("there is a match")
@@ -84,12 +72,43 @@ elif x > 10:
     print("no match")
 else:
     print("no match")
+```
 
-# re.fullmatch is transformed
+```python
+
+if match := re.match("hello"):
+    print("there is a match")
+elif x > 10:
+    print("no match")
+else:
+    print("no match")
+```
+
+## It also applies to search and fullmatch
+
+```python
 match = re.fullmatch("hello")
 if match:
     pass
 
+match = re.search("hello")
+if match:
+    pass
+```
+
+```python
+
+if match := re.fullmatch("hello"):
+    pass
+
+
+if match := re.search("hello"):
+    pass
+```
+
+## It only applies to functions in `re`
+
+```python
 # search is re.search and thus is transformed
 from re import search
 match = search("hello")
@@ -101,7 +120,25 @@ match = lambda s: False
 match = match("hello")
 if match:
     pass
+```
 
+```python
+# search is re.search and thus is transformed
+from re import search
+
+if match := search("hello"):
+    pass
+
+# match is not re.match and thus is not transformed
+match = lambda s: False
+match = match("hello")
+if match:
+    pass
+```
+
+## It does not apply to other `re` functions or from other modules
+
+```python
 # re.sub is not transformed
 sub = re.sub("hello", "bye")
 if sub:
@@ -114,32 +151,6 @@ if match:
 ```
 
 ```python
-# re.match is transformed
-
-if match := re.match("hello"):
-    print("there is a match")
-elif x > 10:
-    print("no match")
-else:
-    print("no match")
-
-# re.fullmatch is transformed
-
-if match := re.fullmatch("hello"):
-    pass
-
-# search is re.search and thus is transformed
-from re import search
-
-if match := search("hello"):
-    pass
-
-# match is not re.match and thus is not transformed
-match = lambda s: False
-match = match("hello")
-if match:
-    pass
-
 # re.sub is not transformed
 sub = re.sub("hello", "bye")
 if sub:
