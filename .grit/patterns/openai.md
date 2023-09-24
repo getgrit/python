@@ -315,7 +315,7 @@ if openai_proxy:
 import openai
 
 if openai_proxy:
-    raise Exception("the 'openai.proxy' option isn't read in the client API. you will need to pass it when you instantiate the client, e.g. 'OpenAI(proxy=openai_proxy)'")
+    raise Exception("The 'openai.proxy' option isn't read in the client API. You will need to pass it when you instantiate the client, e.g. 'OpenAI(proxy=openai_proxy)'")
     raise Exception("the 'openai.api_base' option isn't read in the client API. you will need to pass it when you instantiate the client, e.g. 'OpenAI(api_base=self.openai_api_base)'")
 ```
 
