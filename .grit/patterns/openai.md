@@ -187,7 +187,7 @@ file($body) where {
     },
 
     // Mark all the places where we they configure openai as something that requires manual intervention
-    $body <: maybe contains bubble($need_openai_import) `openai.$field = $val` => `raise Exception("the 'openai.$field' option isn't read in the client API. you will need to pass it when you instantiate the client, e.g. 'OpenAI($field=$val)'")` where {
+    $body <: maybe contains bubble($need_openai_import) `openai.$field = $val` => `raise Exception("The 'openai.$field' option isn't read in the client API. You will need to pass it when you instantiate the client, e.g. 'OpenAI($field=$val)'")` where {
         $need_openai_import = `true`,
     },
 
