@@ -55,7 +55,7 @@ pattern insert_imports() {
         $all_imports = "",
         $has_import = `false`,
         $GLOBAL_IMPORTED_SOURCES <: maybe some process_one_source($p, $all_imports) where { $has_import = `true` },
-        $GLOBAL_BARE_IMPORTS <: maybe some $name where {
+        $GLOBAL_BARE_IMPORTS <: maybe some bubble($all_imports, $has_import) $name where {
             $all_imports += `import $name\n`,
             $has_import = `true`
         },
