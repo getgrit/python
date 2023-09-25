@@ -10,18 +10,15 @@ language python
 
 /** This is a utility file, you do not need to implement it yourself */
 
-pattern python_import($imports, $source) {
-    or {
-      import_from_statement(name=$imports, module_name=dotted_name(name=$source)),
-      import_statement(name=dotted_name(name=$source))
-    }
+pattern import_from($source, $names) {
+    import_from_statement(name=$names, module_name=dotted_name(name=$source)),
 }
 
 pattern before_each_file_prep_imports() {
     $_ where {
         $GLOBAL_IMPORTED_SOURCES = [],
-        $GLOBAL_IMPORTED_NAMES = [],
-        $GLOBAL_BARE_IMPORTS = [],
+        $GLOBAL_NEW_IMPORTED_NAMES = [],
+        $GLOBAL_NEW_BARE_IMPORTS = [],
     }
 }
 
@@ -31,21 +28,21 @@ pattern after_each_file_handle_imports() {
 
 pattern process_one_source($p, $all_imports) {
     [$p, $source] where {
-        $imported_names = [],
-        $GLOBAL_IMPORTED_NAMES <: some bubble($p, $source, $imported_names, $all_imports) [$p, $name, $source] where {
-            $imported_names += $name,
+        $new_names = [],
+        $GLOBAL_NEW_IMPORTED_NAMES <: some bubble($new_names) [$p, $name, $source] where {
+            $new_names += $name,
         },
-        if ($p <: module(statements = some python_import($imports, $source))) {
-          $pruned_imports = [],
-          $imported_names <: some bubble($pruned_imports, $imports) $candidate where {
-            !$imports <: some $candidate,
-            $pruned_imports += $candidate
-          },
-          $joined_imported_names = join(list = $pruned_imports, separator = ", "),
-          $imports => `$imports, $joined_imported_names`
+        if ($p <: module(statements = some import_from($source, $names))) {
+            $names_to_add = "",
+            $new_names <: some $name where {
+                if (!$names <: some $name) {
+                    $names_to_add += `, $name`
+                }
+            },
+            $names => `$names$names_to_add`,
         } else {
-            $joined_imported_names = join(list = $imported_names, separator = ", "),
-            $all_imports += `from $source import $joined_imported_names\n`
+            $joined_names = join(list = $new_names, separator = ", "),
+            $all_imports += `from $source import $joined_names\n`,
         }
     }
 }
@@ -53,45 +50,34 @@ pattern process_one_source($p, $all_imports) {
 pattern insert_imports() {
     $body where {
         $all_imports = "",
-        $has_import = `false`,
-        $GLOBAL_IMPORTED_SOURCES <: maybe some process_one_source($p, $all_imports) where { $has_import = `true` },
-        $GLOBAL_BARE_IMPORTS <: maybe some bubble($all_imports, $has_import) $name where {
+        $GLOBAL_IMPORTED_SOURCES <: maybe some process_one_source($p, $all_imports),
+        $GLOBAL_NEW_BARE_IMPORTS <: maybe some bubble($all_imports) $name where {
             $all_imports += `import $name\n`,
-            $has_import = `true`
         },
-        if ($has_import <: `true`) {
+        if (!$all_imports <: "") {
             $body => `$all_imports\n$body`
-        } else {
-            true
         }
     }
 }
 
-pattern imported_from($source) {
+pattern is_imported_from($source) {
     $name where {
         $program <: module($statements),
-        $statements <: some bubble($name, $source) python_import($imports, $source) where {
-            $imports <: some $name,
+        $statements <: some bubble($name, $source) import_from($source, $names) where {
+            $names <: some $name,
         }
     }
 }
-
 
 pattern ensure_import_from($source) {
     $name where {
-        if ($name <: not imported_from($source)) {
+        if ($name <: not is_imported_from($source)) {
             if ($GLOBAL_IMPORTED_SOURCES <: not some [$program, $source]) {
                 $GLOBAL_IMPORTED_SOURCES += [$program, $source]
-            } else {
-                true
             },
-            if ($GLOBAL_IMPORTED_NAMES <: not some [$program, $name, $source]) {
-                $GLOBAL_IMPORTED_NAMES += [$program, $name, $source]
-            } else {
-                true
+            if ($GLOBAL_NEW_IMPORTED_NAMES <: not some [$program, $name, $source]) {
+                $GLOBAL_NEW_IMPORTED_NAMES += [$program, $name, $source]
             }
-        } else {
-            true
         }
     }
 }
@@ -108,8 +94,8 @@ pattern is_bare_imported() {
 pattern ensure_bare_import() {
     $name where {
         if ($name <: not is_bare_imported()) {
-            if ($GLOBAL_BARE_IMPORTS <: not some $name) {
-                $GLOBAL_BARE_IMPORTS += [$name]
+            if ($GLOBAL_NEW_BARE_IMPORTS <: not some $name) {
+                $GLOBAL_NEW_BARE_IMPORTS += [$name]
             }
         }
     }
@@ -118,8 +104,7 @@ pattern ensure_bare_import() {
 and {
     before_each_file(),
     contains or {
-        python_import(source=`pydantic`) => .,
-        python_import(source=`fools`) => .,
+        import_from(source=`pydantic`) => .,
         `$testlib.TestCase` where {
             $newtest = `newtest`,
             $testlib <: `unittest` => `$newtest`,
@@ -144,12 +129,10 @@ and {
 from typing import List
 from pydantic import BaseModel
 from pydantic import More
-import fools
 ```
 
 ```python
 from typing import List
-
 
 
 ```
