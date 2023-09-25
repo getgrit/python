@@ -96,19 +96,28 @@ pattern ensure_import_from($source) {
     }
 }
 
-pattern ensure_imported() {
+pattern has_bare_import() {
     $name where {
-        and {
-            $program <: not contains python_import(source=$name),
-            if ($GLOBAL_BARE_IMPORTS <: not some $name) {
-                $GLOBAL_BARE_IMPORTS += [$name]
-            } else {
-                true
-            }
-        }
+        $program <: contains import_statement(name=$names) where {
+            $names <: some dotted_name(name=$name),
+        },
     }
 }
 
+pattern add_bare_import() {
+    $name where {
+        $name <: not has_bare_import(),
+        if ($GLOBAL_BARE_IMPORTS <: not some $name) {
+            $GLOBAL_BARE_IMPORTS += [$name]
+        },
+    }
+}
+
+pattern ensure_bare_import() {
+    $name where {
+        $name <: maybe add_bare_import()
+    }
+}
 
 and {
     before_each_file(),
@@ -121,7 +130,7 @@ and {
             $newtest <: ensure_import_from(source=`testing`),
         },
         `othermodule` as $other where {
-            $other <: ensure_imported()
+            $other <: ensure_bare_import()
         },
         `$bob.caller` where {
           $newbob = `newbob`,
