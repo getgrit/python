@@ -98,7 +98,8 @@ pattern ensure_import_from($source) {
 
 pattern has_bare_import() {
     $name where {
-        $program <: contains import_statement(name=$names) where {
+        $program <: module($statements),
+        $statements <: some import_statement(name=$names) where {
             $names <: some dotted_name(name=$name),
         },
     }
