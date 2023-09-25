@@ -2,7 +2,7 @@
 title: Import management for Python
 ---
 
-Grit includes standard patterns for declaratively adding, removing, and updating imports.
+Grit includes standard patterns for declaratively adding and updating imports.
 
 ```grit
 engine marzano(0.1)
