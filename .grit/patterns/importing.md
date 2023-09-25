@@ -29,7 +29,6 @@ pattern after_each_file_handle_imports() {
   file($body) where $body <: maybe insert_imports()
 }
 
-
 pattern process_one_source($p, $all_imports) {
     [$p, $source] where {
         $imported_names = [],
@@ -50,7 +49,6 @@ pattern process_one_source($p, $all_imports) {
         }
     }
 }
-
 
 pattern insert_imports() {
     $body where {
