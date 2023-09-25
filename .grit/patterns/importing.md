@@ -96,7 +96,7 @@ pattern ensure_import_from($source) {
     }
 }
 
-pattern has_bare_import() {
+pattern is_bare_imported() {
     $name where {
         $program <: module($statements),
         $statements <: some import_statement(name=$names) where {
@@ -107,7 +107,7 @@ pattern has_bare_import() {
 
 pattern ensure_bare_import() {
     $name where {
-        if ($name <: not has_bare_import()) {
+        if ($name <: not is_bare_imported()) {
             if ($GLOBAL_BARE_IMPORTS <: not some $name) {
                 $GLOBAL_BARE_IMPORTS += [$name]
             }

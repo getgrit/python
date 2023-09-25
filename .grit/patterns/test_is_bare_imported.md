@@ -1,5 +1,5 @@
 ---
-title: Test - has bare import
+title: Test - is bare imported
 ---
 
 ```grit
@@ -10,19 +10,19 @@ integer() as $int where {
     $math = "math",
     $re = "re",
     $json = "json",
-    if ($math <: has_bare_import()) {
+    if ($math <: is_bare_imported()) {
         $has_math = "true"
     }
     else {
         $has_math = "false"
     },
-    if ($re <: has_bare_import()) {
+    if ($re <: is_bare_imported()) {
         $has_re = "true"
     }
     else {
         $has_re = "false"
     },
-    if ($json <: has_bare_import()) {
+    if ($json <: is_bare_imported()) {
         $has_json = "true"
     }
     else {
