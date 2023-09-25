@@ -2,7 +2,7 @@
 title: Import management for Python
 ---
 
-Grit includes standard patterns for declaratively adding, removing, and updating imports.
+Grit includes standard patterns for declaratively adding and updating imports.
 
 ```grit
 engine marzano(0.1)
@@ -10,15 +10,11 @@ language python
 
 /** This is a utility file, you do not need to implement it yourself */
 
-pattern import_from($source, $names) {
-    import_from_statement(name=$names, module_name=dotted_name(name=$source)),
-}
-
 pattern before_each_file_prep_imports() {
     $_ where {
-        $GLOBAL_NEW_BARE_IMPORT_NAMES = [],
-        $GLOBAL_NEW_FROM_IMPORT_SOURCES = [],
-        $GLOBAL_NEW_FROM_IMPORT_NAMES = [],
+        $NEW_BARE_IMPORT_NAMES = [],
+        $NEW_FROM_IMPORT_SOURCES = [],
+        $NEW_FROM_IMPORT_NAMES = [],
     }
 }
 
@@ -26,10 +22,14 @@ pattern after_each_file_handle_imports() {
   file($body) where $body <: maybe insert_imports()
 }
 
+pattern import_from($source, $names) {
+    import_from_statement(name=$names, module_name=dotted_name(name=$source)),
+}
+
 pattern process_one_source($p, $all_imports) {
     [$p, $source] where {
         $new_names = [],
-        $GLOBAL_NEW_FROM_IMPORT_NAMES <: some bubble($new_names) [$p, $name, $source] where {
+        $NEW_FROM_IMPORT_NAMES <: some bubble($new_names) [$p, $name, $source] where {
             $new_names += $name,
         },
         if ($p <: module(statements = some import_from($source, $names))) {
@@ -50,8 +50,8 @@ pattern process_one_source($p, $all_imports) {
 pattern insert_imports() {
     $body where {
         $all_imports = "",
-        $GLOBAL_NEW_FROM_IMPORT_SOURCES <: maybe some process_one_source($p, $all_imports),
-        $GLOBAL_NEW_BARE_IMPORT_NAMES <: maybe some bubble($all_imports) $name where {
+        $NEW_FROM_IMPORT_SOURCES <: maybe some process_one_source($p, $all_imports),
+        $NEW_BARE_IMPORT_NAMES <: maybe some bubble($all_imports) $name where {
             $all_imports += `import $name\n`,
         },
         if (!$all_imports <: "") {
@@ -72,11 +72,11 @@ pattern is_imported_from($source) {
 pattern ensure_import_from($source) {
     $name where {
         if ($name <: not is_imported_from($source)) {
-            if ($GLOBAL_NEW_FROM_IMPORT_SOURCES <: not some [$program, $source]) {
-                $GLOBAL_NEW_FROM_IMPORT_SOURCES += [$program, $source]
+            if ($NEW_FROM_IMPORT_SOURCES <: not some [$program, $source]) {
+                $NEW_FROM_IMPORT_SOURCES += [$program, $source]
             },
-            if ($GLOBAL_NEW_FROM_IMPORT_NAMES <: not some [$program, $name, $source]) {
-                $GLOBAL_NEW_FROM_IMPORT_NAMES += [$program, $name, $source]
+            if ($NEW_FROM_IMPORT_NAMES <: not some [$program, $name, $source]) {
+                $NEW_FROM_IMPORT_NAMES += [$program, $name, $source]
             }
         }
     }
@@ -94,8 +94,8 @@ pattern is_bare_imported() {
 pattern ensure_bare_import() {
     $name where {
         if ($name <: not is_bare_imported()) {
-            if ($GLOBAL_NEW_BARE_IMPORT_NAMES <: not some $name) {
-                $GLOBAL_NEW_BARE_IMPORT_NAMES += [$name]
+            if ($NEW_BARE_IMPORT_NAMES <: not some $name) {
+                $NEW_BARE_IMPORT_NAMES += [$name]
             }
         }
     }
