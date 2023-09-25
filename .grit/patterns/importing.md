@@ -104,18 +104,13 @@ pattern has_bare_import() {
     }
 }
 
-pattern add_bare_import() {
-    $name where {
-        $name <: not has_bare_import(),
-        if ($GLOBAL_BARE_IMPORTS <: not some $name) {
-            $GLOBAL_BARE_IMPORTS += [$name]
-        },
-    }
-}
-
 pattern ensure_bare_import() {
     $name where {
-        $name <: maybe add_bare_import()
+        if ($name <: not has_bare_import()) {
+            if ($GLOBAL_BARE_IMPORTS <: not some $name) {
+                $GLOBAL_BARE_IMPORTS += [$name]
+            }
+        }
     }
 }
 
