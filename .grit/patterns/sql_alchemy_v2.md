@@ -142,6 +142,37 @@ pattern migrate_post_1_4_create_legacy_select() {
     $stmt => `$new_stmt`,
 }
 
+pattern migrate_executes() {
+    `$var.execute($param)` where {
+        $var <: or {
+            `connection`,
+            `conn`,
+            `session`,
+            `sess`,
+            `c`,
+            `s`,
+        },
+        $param <: not `text($_)`,
+        $param => `text($param)`,
+        $text = `text`,
+        $text <: ensure_import_from(source=`sqlalchemy`),
+    }
+}
+
+pattern change_declarative_base() {
+    $body where {
+        $body <: contains `from sqlalchemy.ext.declarative import declarative_base` => . where {
+            $to_import = `declarative_base`,
+            $to_import <: ensure_import_from(source=`sqlalchemy.orm`),
+        },
+        $body <: contains `$var = declarative_base($params)` => `
+class Base:
+    __allow_unmapped__ = True
+
+$var = declarative_base(cls=Base,$params)
+`
+    }
+}
 
 file($body) where $body <: any {
     contains bulk_update(),
@@ -152,6 +183,8 @@ file($body) where $body <: any {
     contains get_directly_on_session(),
     contains migrate_pre_1_4_select(),
     contains migrate_post_1_4_create_legacy_select(),
+    contains migrate_executes(),
+    contains change_declarative_base(),
 }
 ```
 
@@ -232,4 +265,45 @@ stmt = table.select().where(table.c.id == 5)
 stmt = select(table.c.x, table.c.y)
 
 stmt = select(table.c.x, table.c.y)
+```
+
+# Migrate SQL executions
+
+```python
+sess.execute("SELECT * FROM some_table")
+
+sess.execute(text("SELECT * FROM some_table"))
+
+conn.execute("SELECT * FROM some_table")
+```
+
+```python
+from sqlalchemy import text
+
+sess.execute(text("SELECT * FROM some_table"))
+
+sess.execute(text("SELECT * FROM some_table"))
+
+conn.execute(text("SELECT * FROM some_table"))
+```
+
+# Change declarative_base import
+
+```python
+from sqlalchemy.ext.declarative import declarative_base
+
+Base = declarative_base()
+```
+
+```python
+from sqlalchemy.orm import declarative_base
+
+
+
+
+class Base:
+    __allow_unmapped__ = True
+
+Base = declarative_base(cls=Base)
+
 ```
