@@ -94,8 +94,8 @@ pattern cmp_statements() {
     r"^.+ (?:(?:==)|(?:>=)|(?:<=)|>|<) .+(?: (?:and)|(?:or) .+ (?:(?:==)|(?:>=)|(?:<=)|>|<) .+)*$",
 }
 
-pattern migrate_old_select_args($call_chain, $args, $new_stmt) {
-    $_ where {
+pattern migrate_old_select_args($call_chain, $args) {
+    $stmt where {
         if ($args <: contains list(elements=$items)) {
             $call_chain += `select($items)`,
         } else {
@@ -111,6 +111,7 @@ pattern migrate_old_select_args($call_chain, $args, $new_stmt) {
             $call_chain += `where($cmp_stmt)`,
         },
         $new_stmt = join(list = $call_chain, separator = "."),
+        $stmt => `$new_stmt`,
     }
 }
 
@@ -121,13 +122,14 @@ pattern migrate_pre_1_4_select() {
         `$table.select($args)` where {
             $call_chain += `$table`,
         },
-    } as $stmt where or {
-        $args <: contains list(elements=$_),
-        $args <: contains keyword_argument(name=$_, value=$_),
-        $args <: contains cmp_statements(),
+    } as $stmt where {
+        or {
+            $args <: contains list(),
+            $args <: contains keyword_argument(),
+            $args <: contains cmp_statements(),
+        },
+        $stmt <: migrate_old_select_args($call_chain, $args),
     },
-    migrate_old_select_args($call_chain, $args, $new_stmt),
-    $stmt => `$new_stmt`,
 }
 
 pattern migrate_post_1_4_create_legacy_select() {
@@ -137,9 +139,9 @@ pattern migrate_post_1_4_create_legacy_select() {
         `$table.create_legacy_select($args)` where {
             $call_chain += `$table`,
         },
-    } as $stmt,
-    migrate_old_select_args($call_chain, $args, $new_stmt),
-    $stmt => `$new_stmt`,
+    } as $stmt where {
+        $stmt <: migrate_old_select_args($call_chain, $args),
+    },
 }
 
 pattern migrate_executes() {
