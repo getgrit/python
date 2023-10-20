@@ -243,7 +243,7 @@ chat_completion = client.chat.completions.create(model="gpt-3.5-turbo", messages
 import openai
 
 completion = await openai.Completion.acreate(model="davinci-002", prompt="Hello world")
-chat_completion = await openai.ChatCompletion.acreate(model="gpt-3.5-turbo", essages=[{"role": "user", "content": "Hello world"}])
+chat_completion = await openai.ChatCompletion.acreate(model="gpt-3.5-turbo", messages=[{"role": "user", "content": "Hello world"}])
 ```
 
 ```python
