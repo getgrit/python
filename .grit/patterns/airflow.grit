@@ -1,0 +1,68 @@
+language python
+
+// matches an assignment where the LHS is a variable and the RHS is a `airflow.DAG` call.
+pattern dag_definition($var, $dag, $kwargs) {
+  `$var = $dag` where {
+      $dag <: `DAG($kwargs)`
+  }
+}
+
+// collect all kwargs from a function call, and return them in a list.
+// The following kwargs are ignored: `dag`, `python_callable`.
+pattern collect_kwargs($kwargs) {
+  call($arguments) where {
+    $kwargs = [],
+    $arguments <: contains bubble($kwargs) keyword_argument($name) as $kwarg where {
+      if (!$name <: or { `dag`, `python_callable` }) {
+        $kwargs += $kwarg
+      }
+    }
+  }
+}
+
+// Add @task decorators on any functions that are referenced as python_callables in task definitions,
+// and replace all references to the operator instantiation with the function itself.
+pattern add_task_decorators() {
+  `$parent_func` where {
+    // find all nested function defs that are referenced in a task instantiation.
+    // then: 1) add @task decorator, and 2) replace all task instances with the name of the function.
+    $parent_func <: contains bubble($parent_func) function_definition($name) as $task_func where {
+      $parent_func <: contains bubble($name, $task_func) call(arguments=contains keyword_argument(name=`python_callable`, value=$name)) as $call where {
+        $call <: collect_kwargs($kwargs),
+        $decorator_args = join(list=$kwargs, separator=", "),
+        $task_func => `@task($decorator_args)\n$task_func`,
+        $call => $name
+      },
+    }
+  }
+}
+
+// collect all references to the variable 
+pattern collect_dag_var_refs($dag_refs) {
+  `$function` where {
+    $function <: dag_definition($var) as $decl,
+    $dag_refs = [],
+    $function <: contains bubble ($function, $dag_refs) identifier() as $dag_ref where {
+      $dag_ref <: after $decl,
+      $dag_ref <: $var,
+      $dag_refs += $dag_ref
+    }
+  }
+}
+
+// matches any function that has a DAG return type.
+pattern function_returning_DAG(
+  $return_type,
+  $body,
+  $name,
+  $parameters,
+  $kwargs
+) {
+  function_definition($name, $parameters, $return_type, $body) as $function where {
+    $return_type <: or { "DAG", "airflow.DAG" },
+    $body <: contains dag_definition($dag, $kwargs) as $dag_decl,
+    $function <: add_task_decorators(),
+    $dag_decl => .
+  }
+}
+
