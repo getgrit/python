@@ -46,19 +46,6 @@ pattern add_task_decorators() {
   }
 }
 
-// collect all references to the variable 
-pattern collect_dag_var_refs($dag_refs) {
-  `$function` where {
-    $function <: dag_definition($var) as $decl,
-    $dag_refs = [],
-    $function <: contains bubble ($function, $dag_refs) identifier() as $dag_ref where {
-      $dag_ref <: after $decl,
-      $dag_ref <: $var,
-      $dag_refs += $dag_ref
-    }
-  }
-}
-
 // matches any function that has a DAG return type.
 pattern function_returning_DAG(
   $return_type,
