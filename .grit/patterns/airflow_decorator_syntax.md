@@ -41,7 +41,6 @@ pattern add_task_decorators() {
         $call <: collect_kwargs($kwargs),
         $decorator_args = join(list=$kwargs, separator=", "),
         $task_func => `@task($decorator_args)\n$task_func`,
-        // $call => $name
       },
     }
   }
