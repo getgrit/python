@@ -438,7 +438,9 @@ def mocked_GET_raises(monkeypatch, other):
     monkeypatch.delattr(openai.Engine.list, 'PUT', lambda: True)
 ```
 
-## Migrate images correctly
+## Image creation has been renamed
+
+The `Image.create` method has been renamed to `image.generate`.
 
 ```python
 import openai
