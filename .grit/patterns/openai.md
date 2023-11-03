@@ -70,6 +70,10 @@ pattern rename_func($has_sync, $has_async, $res, $stmt, $params) {
         } else {
             $has_sync = `true`,
             $stmt => `client.$res.$func($params)`,
+        },
+        // Fix function renames
+        if ($res <: `Image`) {
+          $func => `generate`
         }
     }
 }
