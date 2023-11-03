@@ -433,3 +433,19 @@ def mocked_GET_raises(monkeypatch, other):
     # TODO: The resource 'Engine' has been deprecated
     monkeypatch.delattr(openai.Engine.list, 'PUT', lambda: True)
 ```
+
+## Migrate images correctly
+
+```python
+import openai
+
+openai.Image.create(file=file)
+```
+
+```python
+from openai import OpenAI
+
+client = OpenAI()
+
+client.images.generate(file=file)
+```
