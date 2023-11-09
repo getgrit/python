@@ -189,7 +189,7 @@ pattern pytest_patch() {
 pattern openai_main($client) {
     $body where {
         if ($client <: undefined) {
-            $need_openai_import = `true`,
+            $need_openai_import = `false`,
             $create_client = true,
         } else {
             $need_openai_import = `true`,
