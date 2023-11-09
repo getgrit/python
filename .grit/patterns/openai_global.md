@@ -65,13 +65,10 @@ except openai.error.RateLimitError as err:
 
 ```python
 import openai
-from openai import OpenAI
-
-client = OpenAI()
 
 try:
-    completion = client.completions.create(model="davinci-002", prompt="Hello world")
-    chat_completion = client.chat.completions.create(model="gpt-3.5-turbo", messages=[{"role": "user", "content": "Hello world"}])
+    completion = openai.completions.create(model="davinci-002", prompt="Hello world")
+    chat_completion = openai.chat.completions.create(model="gpt-3.5-turbo", messages=[{"role": "user", "content": "Hello world"}])
 except openai.RateLimitError as err:
     pass
 ```
