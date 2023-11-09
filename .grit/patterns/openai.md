@@ -186,14 +186,14 @@ pattern pytest_patch() {
     },
 }
 
-pattern openai_main($use_global_client) {
+pattern openai_main($client) {
     $body where {
-        if ($use_global_client <: undefined) {
+        if ($client <: undefined) {
             $need_openai_import = `true`,
-            $use_global_client = `false`,
+            $create_client = true,
         } else {
             $need_openai_import = `true`,
-            $client = `openai`,
+            $create_client = false,
         },
         $has_openai_import = `false`,
         $has_partial_import = `false`,
@@ -224,7 +224,7 @@ pattern openai_main($use_global_client) {
             }
         },
 
-        if ($use_global_client <: `false`) {
+        if ($create_client <: true) {
             if ($has_openai_import <: `true`) {
                 $import_stmt <: change_import($has_sync, $has_async, $need_openai_import),
                 if ($has_partial_import <: `true`) {
@@ -241,7 +241,8 @@ pattern openai_main($use_global_client) {
 }
 
 file($body) where {
-    $body <: openai_main(use_global_client=true)
+  // No client means instantiate one per file
+  $body <: openai_main()
 }
 ```
 
