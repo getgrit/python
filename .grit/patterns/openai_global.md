@@ -2,7 +2,7 @@
 title: Upgrade to OpenAI Python SDK - Global Client
 ---
 
-Convert OpenAI from openai version to the v1 version, while continuing to use the global client
+Convert OpenAI from openai version to the v1 version, while continuing to use the global client. This is a variant of the [client-based version](https://github.com/getgrit/python/blob/main/.grit/patterns/openai.md).
 
 tags: #python, #openai, #migration
 
