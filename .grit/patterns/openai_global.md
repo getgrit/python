@@ -72,21 +72,3 @@ try:
 except openai.RateLimitError as err:
     pass
 ```
-
-## Image creation has been renamed
-
-The `Image.create` method has been renamed to `image.generate`.
-
-```python
-import openai
-
-openai.Image.create(file=file)
-```
-
-```python
-from openai import OpenAI
-
-client = OpenAI()
-
-client.images.generate(file=file)
-```
