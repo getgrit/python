@@ -98,7 +98,7 @@ pattern change_import($has_sync, $has_async, $need_openai_import, $azure, $clien
           $client = `AzureOpenAI`,
           $aclient = `AsyncAzureOpenAI`,
         } else {
-          $client = `OpenAdI`,
+          $client = `OpenAI`,
           $aclient = `AsyncOpenAI`,
         },
 
@@ -234,10 +234,9 @@ pattern openai_main($client, $azure) {
             $field <: or {
               `api_type` where $res = .,
               `api_base` where {
-                if ($azure <: true) {
-                  $client_params += `azure_endpoint=$val`,
-                  $res = .,
-                }
+                $azure <: true,
+                $client_params += `azure_endpoint=$val`,
+                $res = .,
               },
               `api_key` where {
                 $res = .,
