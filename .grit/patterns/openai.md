@@ -198,6 +198,9 @@ pattern openai_main($client, $azure) {
             $need_openai_import = `true`,
             $create_client = false,
         },
+        if ($azure <: undefined) {
+          $azure = false,
+        },
         $has_openai_import = `false`,
         $has_partial_import = `false`,
         $has_sync = `false`,
