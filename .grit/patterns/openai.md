@@ -186,7 +186,7 @@ pattern pytest_patch() {
     },
 }
 
-pattern openai_main($client) {
+pattern openai_main($client, $version) {
     $body where {
         if ($client <: undefined) {
             $need_openai_import = `false`,
@@ -203,13 +203,6 @@ pattern openai_main($client) {
         // Remap errors
         $body <: maybe contains `openai.error.$exp` => `openai.$exp` where {
             $need_openai_import = `true`,
-        },
-
-        if ($client <: undefined) {
-          // Mark all the places where we they configure openai as something that requires manual intervention
-          $body <: maybe contains bubble($need_openai_import) `openai.$field = $val` => `raise Exception("The 'openai.$field' option isn't read in the client API. You will need to pass it when you instantiate the client, e.g. 'OpenAI($field=$val)'")` where {
-              $need_openai_import = `true`,
-          },
         },
 
         $body <: maybe contains `import openai` as $import_stmt where {
@@ -235,6 +228,13 @@ pattern openai_main($client) {
             } else if ($has_partial_import <: `true`) {
                 $partial_import_stmt <: change_import($has_sync, $has_async, $need_openai_import),
             },
+        },
+
+        if ($client <: undefined) {
+          // Mark all the places where we they configure openai as something that requires manual intervention
+          $body <: maybe contains bubble($need_openai_import) `openai.$field = $val` => `raise Exception("The 'openai.$field' option isn't read in the client API. You will need to pass it when you instantiate the client, e.g. 'OpenAI($field=$val)'")` where {
+              $need_openai_import = `true`,
+          },
         },
 
         $body <: maybe contains unittest_patch(),
