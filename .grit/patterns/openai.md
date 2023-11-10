@@ -115,11 +115,14 @@ pattern change_import($has_sync, $has_async, $need_openai_import) {
     }
 }
 
-pattern rewrite_whole_fn_call($import, $has_sync, $has_async, $res, $func, $params, $stmt, $body, $client) {
+pattern rewrite_whole_fn_call($import, $has_sync, $has_async, $res, $func, $params, $stmt, $body, $client, $azure) {
     or {
         rename_resource() where {
             $import = `true`,
             $func <: rename_func($has_sync, $has_async, $res, $stmt, $params, $client),
+            if ($azure <: true) {
+              $params <: maybe contains bubble `engine` => `model`
+            }
         },
         deprecated_resource() as $dep_res where {
             $stmt_whole = $stmt,
@@ -186,7 +189,7 @@ pattern pytest_patch() {
     },
 }
 
-pattern openai_main($client, $version) {
+pattern openai_main($client, $azure) {
     $body where {
         if ($client <: undefined) {
             $need_openai_import = `false`,
@@ -206,16 +209,16 @@ pattern openai_main($client, $version) {
         },
 
         $body <: maybe contains `import openai` as $import_stmt where {
-            $body <: contains bubble($has_sync, $has_async, $has_openai_import, $body, $client) `openai.$res.$func($params)` as $stmt where {
-                $res <: rewrite_whole_fn_call(import = $has_openai_import, $has_sync, $has_async, $res, $func, $params, $stmt, $body, $client),
+            $body <: contains bubble($has_sync, $has_async, $has_openai_import, $body, $client, $azure) `openai.$res.$func($params)` as $stmt where {
+                $res <: rewrite_whole_fn_call(import = $has_openai_import, $has_sync, $has_async, $res, $func, $params, $stmt, $body, $client, $azure),
             },
         },
 
         $body <: maybe contains `from openai import $resources` as $partial_import_stmt where {
             $has_partial_import = `true`,
-            $body <: contains bubble($has_sync, $has_async, $resources, $client) `$res.$func($params)` as $stmt where {
+            $body <: contains bubble($has_sync, $has_async, $resources, $client, $azure) `$res.$func($params)` as $stmt where {
                 $resources <: contains $res,
-                $res <: rewrite_whole_fn_call($import, $has_sync, $has_async, $res, $func, $params, $stmt, $body, $client),
+                $res <: rewrite_whole_fn_call($import, $has_sync, $has_async, $res, $func, $params, $stmt, $body, $client, $azure),
             }
         },
 

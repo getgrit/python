@@ -11,7 +11,7 @@ engine marzano(0.1)
 language python
 
 file($body) where {
-  $body <: openai_main(version=`azure`)
+  $body <: openai_main(azure=true)
 }
 ```
 
