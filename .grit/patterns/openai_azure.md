@@ -29,7 +29,7 @@ openai.api_key = os.getenv("AZURE_OPENAI_KEY")
 openai.api_version = "2023-05-15"
 
 response = openai.ChatCompletion.create(
-    engine="gpt-35-turbo", # engine = "deployment_name".
+    engine="gpt-35-turbo",
     messages=[
         {"role": "system", "content": "You are a helpful assistant."},
         {"role": "user", "content": "Does Azure OpenAI support customer managed keys?"},
@@ -52,7 +52,7 @@ client = AzureOpenAI(
 )
 
 response = client.chat.completions.create(
-    model="gpt-35-turbo", # model = "deployment_name".
+    model="gpt-35-turbo",
     messages=[
         {"role": "system", "content": "You are a helpful assistant."},
         {"role": "user", "content": "Does Azure OpenAI support customer managed keys?"},
