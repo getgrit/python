@@ -47,22 +47,54 @@ print(response['choices'][0]['message']['content'])
 import os
 from openai import AzureOpenAI
 
-client = AzureOpenAI(
-  azure_endpoint = os.getenv("AZURE_OPENAI_ENDPOINT"),
-  api_key=os.getenv("AZURE_OPENAI_KEY"),
-  api_version="2023-05-15"
-)
+client = AzureOpenAI(azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"), api_key=os.getenv("AZURE_OPENAI_KEY"), api_version="2023-05-15")
 
 
-response = client.chat.completions.create(
-    model="gpt-35-turbo",
-    messages=[
-        {"role": "system", "content": "You are a helpful assistant."},
-        {"role": "user", "content": "Does Azure OpenAI support customer managed keys?"},
-        {"role": "assistant", "content": "Yes, customer managed keys are supported by Azure OpenAI."},
-        {"role": "user", "content": "Do other Azure AI services support this too?"}
-    ]
-)
+
+
+
+
+response = client.chat.completions.create(model="gpt-35-turbo",
+messages=[
+    {"role": "system", "content": "You are a helpful assistant."},
+    {"role": "user", "content": "Does Azure OpenAI support customer managed keys?"},
+    {"role": "assistant", "content": "Yes, customer managed keys are supported by Azure OpenAI."},
+    {"role": "user", "content": "Do other Azure AI services support this too?"}
+])
 
 print(response['choices'][0]['message']['content'])
+```
+
+## Embeddings
+
+```python
+import openai
+
+openai.api_type = "azure"
+openai.api_key = YOUR_API_KEY
+openai.api_base = "https://YOUR_RESOURCE_NAME.openai.azure.com"
+openai.api_version = "2023-05-15"
+
+response = openai.Embedding.create(
+    input="Your text string goes here",
+    engine="YOUR_DEPLOYMENT_NAME"
+)
+embeddings = response['data'][0]['embedding']
+print(embeddings)
+```
+
+```python
+from openai import AzureOpenAI
+
+client = AzureOpenAI(api_key=YOUR_API_KEY, azure_endpoint="https://YOUR_RESOURCE_NAME.openai.azure.com", api_version="2023-05-15")
+
+
+
+
+
+
+response = client.embeddings.create(input="Your text string goes here",
+model="YOUR_DEPLOYMENT_NAME")
+embeddings = response['data'][0]['embedding']
+print(embeddings)
 ```
