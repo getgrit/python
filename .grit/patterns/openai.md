@@ -119,8 +119,7 @@ pattern change_import($has_sync, $has_async, $need_openai_import, $azure, $clien
             $imports_and_defs += `aclient = $aclient($formatted_params)`,
         },
 
-        $separator = `\n`,
-        $formatted = join(list = $imports_and_defs, $separator),
+        $formatted = join(list = $imports_and_defs, separator=`\n`),
         $stmt => `$formatted`,
     }
 }
