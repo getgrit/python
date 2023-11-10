@@ -102,7 +102,7 @@ pattern change_import($has_sync, $has_async, $need_openai_import, $azure, $clien
           $aclient = `AsyncOpenAI`,
         },
 
-        $formatted_params = join(list = $client_params, separator = `, `),
+        $formatted_params = join(list = $client_params, separator = `,\n`),
 
         if (and { $has_sync <: `true`, $has_async <: `true` }) {
             $imports_and_defs += `from openai import $client, $aclient`,
