@@ -86,7 +86,7 @@ pattern rename_func($has_sync, $has_async, $res, $stmt, $params, $client) {
     }
 }
 
-pattern change_import($has_sync, $has_async, $need_openai_import) {
+pattern change_import($has_sync, $has_async, $need_openai_import, $azure) {
     $stmt where {
         $imports_and_defs = [],
 
@@ -94,19 +94,27 @@ pattern change_import($has_sync, $has_async, $need_openai_import) {
             $imports_and_defs += `import openai`,
         },
 
+        if ($azure <: true) {
+          $client = `AzureOpenAI`,
+          $aclient = `AsyncAzureOpenAI`,
+        } else {
+          $client = `OpenAdI`,
+          $aclient = `AsyncOpenAI`,
+        },
+
         if (and { $has_sync <: `true`, $has_async <: `true` }) {
-            $imports_and_defs += `from openai import OpenAI, AsyncOpenAI`,
+            $imports_and_defs += `from openai import $client, $aclient`,
             $imports_and_defs += ``, // Blank line
-            $imports_and_defs += `client = OpenAI()`,
-            $imports_and_defs += `aclient = AsyncOpenAI()`,
+            $imports_and_defs += `client = $client()`,
+            $imports_and_defs += `aclient = $aclient()`,
         } else if ($has_sync <: `true`) {
-            $imports_and_defs += `from openai import OpenAI`,
+            $imports_and_defs += `from openai import $client`,
             $imports_and_defs += ``, // Blank line
-            $imports_and_defs += `client = OpenAI()`,
+            $imports_and_defs += `client = $client()`,
         } else if ($has_async <: `true`) {
-            $imports_and_defs += `from openai import AsyncOpenAI`,
+            $imports_and_defs += `from openai import $aclient`,
             $imports_and_defs += ``, // Blank line
-            $imports_and_defs += `aclient = AsyncOpenAI()`,
+            $imports_and_defs += `aclient = $aclient()`,
         },
 
         $separator = `\n`,
@@ -227,12 +235,12 @@ pattern openai_main($client, $azure) {
 
         if ($create_client <: true) {
             if ($has_openai_import <: `true`) {
-                $import_stmt <: change_import($has_sync, $has_async, $need_openai_import),
+                $import_stmt <: change_import($has_sync, $has_async, $need_openai_import, $azure),
                 if ($has_partial_import <: `true`) {
                     $partial_import_stmt => .,
                 },
             } else if ($has_partial_import <: `true`) {
-                $partial_import_stmt <: change_import($has_sync, $has_async, $need_openai_import),
+                $partial_import_stmt <: change_import($has_sync, $has_async, $need_openai_import, $azure),
             },
         },
 
