@@ -95,8 +95,28 @@ client = AzureOpenAI(
 )
 
 
-response = client.embeddings.create(input="Your text string goes here",
-model="YOUR_DEPLOYMENT_NAME")
+response = client.embeddings.create(
+  input="Your text string goes here",
+  model="YOUR_DEPLOYMENT_NAME"
+)
 embeddings = response['data'][0]['embedding']
 print(embeddings)
+```
+
+## Async API
+
+```python
+import openai
+
+completion = await openai.Completion.acreate(model="davinci-002", prompt="Hello world")
+chat_completion = await openai.ChatCompletion.acreate(model="gpt-3.5-turbo", messages=[{"role": "user", "content": "Hello world"}])
+```
+
+```python
+from openai import AsyncAzureOpenAI
+
+aclient = AsyncAzureOpenAI()
+
+completion = await aclient.completions.create(model="davinci-002", prompt="Hello world")
+chat_completion = await aclient.chat.completions.create(model="gpt-3.5-turbo", messages=[{"role": "user", "content": "Hello world"}])
 ```
