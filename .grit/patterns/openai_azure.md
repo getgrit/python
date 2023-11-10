@@ -51,6 +51,7 @@ client = AzureOpenAI(
   api_version="2023-05-15"
 )
 
+
 response = client.chat.completions.create(
     model="gpt-35-turbo",
     messages=[
