@@ -225,6 +225,34 @@ pattern openai_main($client, $azure) {
             },
         },
 
+        $client_params = [],
+        if ($client <: undefined) {
+          // Mark all the places where we they configure openai as something that requires manual intervention
+          $body <: maybe contains bubble($need_openai_import, $azure, $client_params) `openai.$field = $val` where {
+            $field <: or {
+              `api_type` where $res = .,
+              `api_base` where {
+                if ($azure <: true) {
+                  $client_params += `azure_endpoint=$val`,
+                  $res = .,
+                }
+              },
+              `api_key` where {
+                $res = .,
+                $client_params += `api_key=$val`,
+              },
+              `api_version` where {
+                $res = .,
+                $client_params += `api_version=$val`,
+              },
+              $_ where {
+                $res = `raise Exception("The 'openai.$field' option isn't read in the client API. You will need to pass it when you instantiate the client, e.g. 'OpenAI($field=$val)'")`,
+                $need_openai_import = `true`,
+              }
+            }
+          } => $res
+        },
+
         $body <: maybe contains `from openai import $resources` as $partial_import_stmt where {
             $has_partial_import = `true`,
             $body <: contains bubble($has_sync, $has_async, $resources, $client, $azure) `$res.$func($params)` as $stmt where {
@@ -242,13 +270,6 @@ pattern openai_main($client, $azure) {
             } else if ($has_partial_import <: `true`) {
                 $partial_import_stmt <: change_import($has_sync, $has_async, $need_openai_import, $azure),
             },
-        },
-
-        if ($client <: undefined) {
-          // Mark all the places where we they configure openai as something that requires manual intervention
-          // $body <: maybe contains bubble($need_openai_import) `openai.$field = $val` => `raise Exception("The 'openai.$field' option isn't read in the client API. You will need to pass it when you instantiate the client, e.g. 'OpenAI($field=$val)'")` where {
-          //     $need_openai_import = `true`,
-          // },
         },
 
         $body <: maybe contains unittest_patch(),
