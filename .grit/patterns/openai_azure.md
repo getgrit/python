@@ -2,7 +2,9 @@
 title: Upgrade to Azure OpenAI Python SDK v1.x
 ---
 
-Convert OpenAI from openai version to the v1 version, while using the Azure OpenAI. This is a variant of the [standard migration](https://github.com/getgrit/python/blob/main/.grit/patterns/openai.md).
+This migration attempts to encode some of the [Azure-specific details](https://learn.microsoft.com/en-us/azure/ai-services/openai/how-to/migration) for migration to OpenAI Python SDK v1.x.
+
+This is a variant of the [standard migration](https://github.com/getgrit/python/blob/main/.grit/patterns/openai.md).
 
 tags: #python, #openai, #migration, #stainless, #azure
 
