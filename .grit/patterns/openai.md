@@ -222,7 +222,7 @@ pattern openai_main($client, $azure) {
             $field <: or {
               `api_type` where {
                 $res = .,
-                if ($val <: `"azure"`) {
+                if ($val <: or {`"azure"`, `"azure_ad"`}) {
                   $azure = true
                 },
               },
