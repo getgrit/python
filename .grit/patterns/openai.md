@@ -218,7 +218,7 @@ pattern openai_main($client, $azure) {
         $client_params = [],
         if ($client <: undefined) {
           // Mark all the places where we they configure openai as something that requires manual intervention
-          $body <: maybe contains bubble($need_openai_import, $azure, $client_params) `openai.$field = $val` where {
+          $body <: maybe contains bubble($need_openai_import, $azure, $client_params) `openai.$field = $val` as $setter where {
             $field <: or {
               `api_type` where {
                 $res = .,
@@ -242,7 +242,7 @@ pattern openai_main($client, $azure) {
                 $client_params += `api_version=$val`,
               },
               $_ where {
-                $res = `raise Exception("The 'openai.$field' option isn't read in the client API. You will need to pass it when you instantiate the client, e.g. 'OpenAI($field=$val)'")`,
+                $res = todo(message=`The 'openai.$field' option isn't read in the client API. You will need to pass it when you instantiate the client, e.g. 'OpenAI($field=$val)'`, target=$setter),
                 $need_openai_import = `true`,
               }
             }
@@ -386,8 +386,10 @@ if openai_proxy:
 import openai
 
 if openai_proxy:
-    raise Exception("The 'openai.proxy' option isn't read in the client API. You will need to pass it when you instantiate the client, e.g. 'OpenAI(proxy=openai_proxy)'")
-    raise Exception("The 'openai.api_base' option isn't read in the client API. You will need to pass it when you instantiate the client, e.g. 'OpenAI(api_base=self.openai_api_base)'")
+    # TODO: The 'openai.proxy' option isn't read in the client API. You will need to pass it when you instantiate the client, e.g. 'OpenAI(proxy=openai_proxy)'
+    # openai.proxy = openai_proxy
+    # TODO: The 'openai.api_base' option isn't read in the client API. You will need to pass it when you instantiate the client, e.g. 'OpenAI(api_base=self.openai_api_base)'
+    # openai.api_base = self.openai_api_base
 ```
 
 ## Remap errors
