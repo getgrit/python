@@ -216,40 +216,40 @@ pattern openai_main($client, $azure) {
         $has_async = `false`,
 
         $client_params = [],
-        if ($client <: undefined) {
-          // Mark all the places where we they configure openai as something that requires manual intervention
-          $body <: maybe contains bubble($need_openai_import, $azure, $client_params) `openai.$field = $val` as $setter where {
-            $field <: or {
-              `api_type` where {
-                $res = .,
-                if ($val <: or {`"azure"`, `"azure_ad"`}) {
-                  $azure = true
-                },
-              },
-              `api_base` where {
-                $azure <: true,
-                $client_params += `azure_endpoint=$val`,
-                $res = .,
-              },
-              `api_key` where {
-                $res = .,
-                $client_params += `api_key=$val`,
-              },
-              `api_version` where {
-                $res = .,
-                // Only Azure has api_version
-                $azure = true,
-                $client_params += `api_version=$val`,
-              },
-              $_ where {
-                $res = todo(message=`The 'openai.$field' option isn't read in the client API. You will need to pass it when you instantiate the client, e.g. 'OpenAI($field=$val)'`, target=$setter),
-                $need_openai_import = `true`,
-              }
-            }
-          } => $res
-        },
 
         $body <: any {
+          // Mark all the places where we they configure openai as something that requires manual intervention
+          if ($client <: undefined) {
+            contains bubble($need_openai_import, $azure, $client_params) `openai.$field = $val` as $setter where {
+              $field <: or {
+                `api_type` where {
+                  $res = .,
+                  if ($val <: or {`"azure"`, `"azure_ad"`}) {
+                    $azure = true
+                  },
+                },
+                `api_base` where {
+                  $azure <: true,
+                  $client_params += `azure_endpoint=$val`,
+                  $res = .,
+                },
+                `api_key` where {
+                  $res = .,
+                  $client_params += `api_key=$val`,
+                },
+                `api_version` where {
+                  $res = .,
+                  // Only Azure has api_version
+                  $azure = true,
+                  $client_params += `api_version=$val`,
+                },
+                $_ where {
+                  $res = todo(message=`The 'openai.$field' option isn't read in the client API. You will need to pass it when you instantiate the client, e.g. 'OpenAI($field=$val)'`, target=$setter),
+                  $need_openai_import = `true`,
+                }
+              }
+            } => $res
+          },
           // Remap errors
           contains `openai.error.$exp` => `openai.$exp` where {
             $need_openai_import = `true`,
