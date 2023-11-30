@@ -2,7 +2,7 @@
 
 Disable skipping pytest tests without an explanation.
 
-tags: #jest, #testing, #hygiene
+tags: #pytest, #testing, #hygiene
 
 ```grit
 engine marzano(0.1)
